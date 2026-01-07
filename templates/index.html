@@ -2,33 +2,85 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>{{ project_name }} - 메인</title>
+    <title>{{ project_name }}</title>
     <style>
-        body { font-family: sans-serif; line-height: 1.6; }
-        nav { background: #1a1a1a; padding: 15px; }
-        nav a { color: #00ff41; margin-right: 20px; text-decoration: none; font-weight: bold; }
-        .container { padding: 20px; }
-        .news-section { border: 2px solid #333; padding: 15px; min-height: 300px; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; margin: 0; }
+        nav { background: #1a1a1a; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        nav .brand { font-size: 1.5rem; font-weight: bold; color: #00ff41; }
+        nav .menu a { color: white; margin-left: 20px; text-decoration: none; font-weight: bold; }
+        nav .menu a:hover { color: #00ff41; }
+
+        .container { padding: 25px; }
+        h1 { font-size: 1.8rem; color: #1a1a1a; margin-bottom: 25px; border-left: 5px solid #00ff41; padding-left: 15px; }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background: white; border-top: 4px solid #1a1a1a; padding: 20px; min-height: 550px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card h3 { font-size: 1.2rem; margin-top: 0; color: #1a1a1a; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        li a { color: #333; text-decoration: none; font-size: 0.95rem; line-height: 1.5; display: block; }
+        li a:hover { color: #007bff; text-decoration: underline; }
     </style>
 </head>
 <body>
     <nav>
-        <span>[ {{ project_name }} ]</span>
-        <a href="/">HOME(NEWS)</a>
-        <a href="/login">SIGN UP</a>
-        <a href="/indicators">INDICATORS</a>
-        <a href="/analysis">ANALYSIS</a>
+        <div class="brand">{{ project_name }}</div>
+        <div class="menu">
+            <a href="/">메인(뉴스)</a>
+            <a href="/login">로그인</a>
+            <a href="/indicators">지표</a>
+            <a href="/analysis">AI분석</a>
+        </div>
     </nav>
 
     <div class="container">
-        <h1>Market WatchDog: 지능형 시장 감시 시스템</h1>
-
-        <section class="news-section">
-            <h3>실시간 주요 금융 뉴스 (크롤링 대기 중)</h3>
-            <ul id="news-feed">
-                <li>아직 가져온 뉴스가 없다 형. 크롤러 붙여야 돼.</li>
-            </ul>
-        </section>
+        <h1>Market Surveillance Report</h1>
+        <div class="grid">
+            <div class="card">
+                <h3>직접금융 및 발행 시장</h3>
+                <ul id="slot-1"><li>뉴스를 분석하고 있습니다...</li></ul>
+            </div>
+            <div class="card">
+                <h3>단기자금 유동성 및 금리</h3>
+                <ul id="slot-2"><li>뉴스를 분석하고 있습니다...</li></ul>
+            </div>
+            <div class="card">
+                <h3>신용 위험 및 시스템 리스크</h3>
+                <ul id="slot-3"><li>뉴스를 분석하고 있습니다...</li></ul>
+            </div>
+        </div>
     </div>
+
+   <script>
+    function refreshNews() {
+        console.log("연합인포맥스 데이터 가져오는 중...");
+        fetch('/api/infomax_news')
+            .then(res => res.json())
+            .then(data => {
+                console.log("뉴스 로딩 완료:", data);
+                renderSlot('slot-1', data.slot1);
+                renderSlot('slot-2', data.slot2);
+                renderSlot('slot-3', data.slot3);
+            })
+            .catch(err => {
+                console.error("데이터 통신 에러:", err);
+                alert("서버와 통신이 끊겼어 형. 파이참 터미널 확인해봐.");
+            });
+    }
+
+    function renderSlot(id, items) {
+        const el = document.getElementById(id);
+        if (items && items.length > 0) {
+            el.innerHTML = items.map(n =>
+                `<li><a href="${n.link}" target="_blank">● ${n.title}</a></li>`
+            ).join('');
+        } else {
+            el.innerHTML = '<li>관련 최신 뉴스가 없습니다. 키워드를 확인해주세요.</li>';
+        }
+    }
+
+    window.onload = refreshNews;
+</script>
 </body>
 </html>
