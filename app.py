@@ -1,7 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -62,9 +62,32 @@ def index():
     return render_template('index.html', project_name=PROJECT_NAME)
 
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # DB에서 유저 확인
+        user = User.query.filter_by(username=username, password=password).first()
+
+        if user:
+            session['user_id'] = user.id
+            session['username'] = user.username
+            print(f"✅ {user.username} 로그인 성공")
+            return redirect(url_for('index'))
+        else:
+            print("❌ 로그인 실패: 아이디 또는 비밀번호 틀림")
+            return "로그인 실패! 정보를 확인해 형."  # 나중에 에러 메시지 처리
+
     return render_template('login.html', project_name=PROJECT_NAME)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()  # 세션 싹 비우기
+    print("👋 로그아웃 완료")
+    return redirect(url_for('index'))
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -81,6 +104,10 @@ def signup():
         )
         db.session.add(new_user)
         db.session.commit()
+
+        # 가입 즉시 로그인 처리
+        session['user_id'] = new_user.id
+        session['username'] = new_user.username
         return redirect(url_for('index'))
     return render_template('login.html', project_name=PROJECT_NAME)
 
