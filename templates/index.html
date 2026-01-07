@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ project_name }} - 메인</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; }
+        nav { background: #1a1a1a; padding: 15px; }
+        nav a { color: #00ff41; margin-right: 20px; text-decoration: none; font-weight: bold; }
+        .container { padding: 20px; }
+        .news-section { border: 2px solid #333; padding: 15px; min-height: 300px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span>[ {{ project_name }} ]</span>
+        <a href="/">HOME(NEWS)</a>
+        <a href="/login">SIGN UP</a>
+        <a href="/indicators">INDICATORS</a>
+        <a href="/analysis">ANALYSIS</a>
+    </nav>
+
+    <div class="container">
+        <h1>Market WatchDog: 지능형 시장 감시 시스템</h1>
+
+        <section class="news-section">
+            <h3>실시간 주요 금융 뉴스 (크롤링 대기 중)</h3>
+            <ul id="news-feed">
+                <li>아직 가져온 뉴스가 없다 형. 크롤러 붙여야 돼.</li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>

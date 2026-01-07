@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Market WatchDog - 가입</title>
+</head>
+<body>
+    <h2>Market WatchDog 회원가입</h2>
+    <form action="/signup" method="POST">
+        <p>구분:
+            <input type="radio" name="user_type" value="personal" checked onclick="toggleCorp(false)"> 개인
+            <input type="radio" name="user_type" value="corporate" onclick="toggleCorp(true)"> 기업
+        </p>
+        <p><input type="text" name="username" placeholder="아이디" required></p>
+        <p><input type="password" name="password" placeholder="비밀번호" required></p>
+        <p><input type="email" name="email" placeholder="이메일" required></p>
+
+        <div id="corp_fields" style="display:none;">
+            <p><input type="text" name="company_name" placeholder="회사명"></p>
+            <p><input type="text" name="biz_number" placeholder="사업자번호"></p>
+        </div>
+
+        <button type="submit">가입하기</button>
+    </form>
+
+    <script>
+        function toggleCorp(isCorp) {
+            document.getElementById('corp_fields').style.display = isCorp ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
