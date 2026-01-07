@@ -1,10 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Market WatchDog - 지표 조회</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container { width: 90%; margin: auto; padding: 20px; }
+        .controls { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .chart-box { margin-top: 30px; background: white; padding: 20px; border-radius: 8px; height: 500px; }
+    </style>
 </head>
-<body>
+<body style="background:#f4f7f6;">
+    <div class="container">
+        <h1>📊 경제 지표 맞춤 조회</h1>
 
+        <div class="controls">
+            <div>
+                <label>지표 선택</label><br>
+                <select id="indicator">
+                    <option value="028Y001|010300000|D">CP(91일) 금리 (일간)</option>
+                    <option value="028Y001|010200000|D">국고채(3년) 금리 (일간)</option>
+                    <option value="005Y003|0000001|M">비은행금융기관 여신총액 (월간)</option>
+                    <option value="041Y001|1010000|Q">금융자산잔액-가계 (분기)</option>
+                </select>
+            </div>
+            <div>
+                <label>시작일</label><br>
+                <input type="date" id="start_date" value="2023-01-01">
+            </div>
+            <div>
+                <label>종료일</label><br>
+                <input type="date" id="end_date" value="2024-12-31">
+            </div>
+            <button onclick="loadChart()" style="padding: 10px 20px; background: #1a1a1a; color: white; border: none; cursor: pointer;">조회하기</button>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        function loadChart() {
+            const [table, item, freq] = document.getElementById('indicator').value.split('|');
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+
+            fetch(`/api/ecos_custom?table=${table}&item=${item}&freq=${freq}&start=${start}&end=${end}`)
+                .then(res => res.json())
+                .then(data => {
+                    const ctx = document.getElementById('myChart').getContext('2d');
+
+                    if(myChart) myChart.destroy(); // 기존 그래프 파괴
+
+                    myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d => d.TIME),
+                            datasets: [{
+                                label: '데이터 수치',
+                                data: data.map(d => d.DATA_VALUE),
+                                borderColor: '#00ff41',
+                                tension: 0.1,
+                                fill: false
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                });
+        }
+
+        window.onload = loadChart;
+    </script>
 </body>
 </html>

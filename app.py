@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from models import db, User  # models.py에서 가져옴
 from crawler import get_multiple_keywords_news  # crawler.py에서 가져옴
-from finance_api import get_market_watch_indicators
+from finance_api import get_ecos_data
 
 app = Flask(__name__)
 app.secret_key = "watchdog_secret"
@@ -35,13 +35,13 @@ def login():
             session['username'] = user.username
             return redirect(url_for('index'))
         else:
-            return "로그인 실패! 아이디나 비번 확인해 형."
+            return "로그인 실패! 아이디나 비번 확인."
     return render_template('login.html', project_name=PROJECT_NAME, mode='login')
 
 @app.route('/logout')
 def logout():
     session.clear()
-    print("👋 로그아웃 완료")
+    print(" 로그아웃 완료")
     return redirect(url_for('index'))
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -81,10 +81,16 @@ def get_infomax_news():
     }
     return jsonify(data)
 
-@app.route('/api/market_indicators')
-def api_indicators():
-    # ECOS, FISIS 데이터들 싹 긁어온다
-    data = get_market_watch_indicators()
+@app.route('/api/ecos_custom')
+def ecos_custom():
+    # 브라우저가 보낸 파라미터 읽기
+    table = request.args.get('table')
+    item = request.args.get('item')
+    freq = request.args.get('freq')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    data = get_ecos_data(table, item, freq, start, end)
     return jsonify(data)
 
 if __name__ == '__main__':
