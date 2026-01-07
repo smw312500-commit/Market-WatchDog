@@ -1,26 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Market WatchDog - 가입</title>
+    <meta charset="UTF-8">
+    <title>{{ project_name }} - {{ '로그인' if mode == 'login' else '회원가입' }}</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; }
+        h2 { text-align: center; color: #1a1a1a; margin-bottom: 30px; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #00ff41; color: #1a1a1a; }
+        .switch-link { text-align: center; margin-top: 20px; font-size: 0.9rem; }
+        .switch-link a { color: #007bff; text-decoration: none; }
+    </style>
 </head>
 <body>
-    <h2>Market WatchDog 회원가입</h2>
-    <form action="/signup" method="POST">
-        <p>구분:
-            <input type="radio" name="user_type" value="personal" checked onclick="toggleCorp(false)"> 개인
-            <input type="radio" name="user_type" value="corporate" onclick="toggleCorp(true)"> 기업
-        </p>
-        <p><input type="text" name="username" placeholder="아이디" required></p>
-        <p><input type="password" name="password" placeholder="비밀번호" required></p>
-        <p><input type="email" name="email" placeholder="이메일" required></p>
+    <div class="auth-box">
+        <h2>{{ project_name }}</h2>
 
-        <div id="corp_fields" style="display:none;">
-            <p><input type="text" name="company_name" placeholder="회사명"></p>
-            <p><input type="text" name="biz_number" placeholder="사업자번호"></p>
+        {% if mode == 'login' %}
+        <form action="/login" method="POST">
+            <input type="text" name="username" placeholder="아이디" required>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            <button type="submit">로그인</button>
+        </form>
+        <div class="switch-link">
+            계정이 없으신가요? <a href="/signup">회원가입</a>
         </div>
 
-        <button type="submit">가입하기</button>
-    </form>
+        {% else %}
+        <form action="/signup" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label><input type="radio" name="user_type" value="personal" checked onclick="toggleCorp(false)"> 개인</label>
+                <label style="margin-left: 20px;"><input type="radio" name="user_type" value="corporate" onclick="toggleCorp(true)"> 기업</label>
+            </div>
+            <input type="text" name="username" placeholder="아이디" required>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            <input type="email" name="email" placeholder="이메일" required>
+
+            <div id="corp_fields" style="display:none;">
+                <input type="text" name="company_name" placeholder="회사명">
+                <input type="text" name="biz_number" placeholder="사업자번호">
+            </div>
+            <button type="submit">가입하기</button>
+        </form>
+        <div class="switch-link">
+            이미 계정이 있으신가요? <a href="/login">로그인</a>
+        </div>
+        {% endif %}
+    </div>
 
     <script>
         function toggleCorp(isCorp) {
