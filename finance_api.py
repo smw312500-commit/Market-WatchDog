@@ -37,22 +37,41 @@ ECOS_INDICATORS = {
     "NON_FIN_ABS_LIAB": {"table": "281Y002", "item_code1": "S11", "item_code2": "F046SZB", "item_code3": "L", "freq_list": ["A", "Q"], "unit_type": "money", "name": "비금융법인 유동화부채", "group": "금융자산부채잔액표"}
 }
 
+
 def get_ecos_data(table_code, item_code1, freq, start_date, end_date, item_code2=None, item_code3=None):
+    # 기본 날짜 형식 (YYYYMMDD)
     s_date = str(start_date or "20150101").replace('-', '')
     e_date = str(end_date or datetime.now().strftime('%Y%m%d')).replace('-', '')
+
     try:
-        if freq == 'Q':
+        # [핵심 수정] 주기에 맞춰 날짜 형식을 칼같이 잘라줘야 함
+        if freq == 'A':  # 연별: 4자리 (YYYY)
+            s_date = s_date[:4]
+            e_date = e_date[:4]
+        elif freq == 'M':  # 월별: 6자리 (YYYYMM)
+            s_date = s_date[:6]
+            e_date = e_date[:6]
+        elif freq == 'Q':  # 분기별: YYYYQn 형식
             s_month = int(s_date[4:6]) if len(s_date) >= 6 else 1
             e_month = int(e_date[4:6]) if len(e_date) >= 6 else 12
             s_date = f"{s_date[:4]}Q{(s_month - 1) // 3 + 1}"
             e_date = f"{e_date[:4]}Q{(e_month - 1) // 3 + 1}"
+
+        # 아이템 코드 경로 생성
         item_path = item_code1
         if item_code2: item_path += f"/{item_code2}"
         if item_code3: item_path += f"/{item_code3}"
+
+        # API URL 생성
         url = f"http://ecos.bok.or.kr/api/StatisticSearch/{ECOS_KEY}/json/kr/1/100/{table_code}/{freq}/{s_date}/{e_date}/{item_path}/"
+
         res = requests.get(url)
         data = res.json()
+
         if 'StatisticSearch' in data:
             return data['StatisticSearch']['row']
         return []
-    except: return []
+
+    except Exception as e:
+        print(f"데이터 로드 에러: {e}")
+        return []

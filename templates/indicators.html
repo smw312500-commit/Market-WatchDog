@@ -6,21 +6,47 @@
     <title>{{ project_name }} - 통합 지표 분석</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 커스텀 스크롤바 스타일 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+    </style>
 </head>
 <body class="bg-[#0f172a] text-slate-200 min-h-screen p-4 md:p-8">
 
     <div class="max-w-7xl mx-auto">
-        <header class="mb-8 border-b border-slate-700 pb-4">
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                🚀 Market WatchDog 분석 센터
-            </h1>
-            <p class="text-slate-400 mt-2">지표를 선택하고 복합 관계를 분석하세요.</p>
+        <nav class="flex items-center justify-between mb-8 pb-4 border-b border-slate-700">
+            <a href="/" class="flex items-center space-x-2 group">
+                <span class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                    🚀 Market WatchDog
+                </span>
+            </a>
+            <div class="flex items-center space-x-8 text-sm font-bold">
+                <a href="/" class="text-slate-400 hover:text-white transition">홈(INDEX)</a>
+                <a href="/indicators" class="text-blue-400 border-b-2 border-blue-400 pb-1">지표 분석</a>
+                <a href="/analysis" class="text-slate-400 hover:text-white transition">AI 분석</a>
+                {% if session.username %}
+                    <div class="flex items-center space-x-3">
+                        <span class="text-slate-500 font-medium">{{ session.username }}형</span>
+                        <a href="/logout" class="text-rose-400 hover:text-rose-300 transition">로그아웃</a>
+                    </div>
+                {% else %}
+                    <a href="/login" class="text-slate-400 hover:text-white transition">로그인</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <header class="mb-8">
+            <h2 class="text-xl font-bold text-slate-100">📊 통합 지표 분석 센터</h2>
+            <p class="text-slate-400 mt-1">지표를 선택하고 시장의 복합 관계를 분석하세요.</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
                 <h3 class="text-blue-400 font-bold mb-4">1️⃣ 통계 바구니 선택</h3>
-                <div class="space-y-3" id="table-filter-group"></div>
+                <div class="space-y-3" id="table-filter-group">
+                    </div>
             </div>
 
             <div class="lg:col-span-2 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
@@ -33,14 +59,29 @@
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
                 <div>
                     <h3 class="text-emerald-400 font-bold mb-4">⚙️ 분석 옵션</h3>
-                    <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none focus:border-blue-500">
-                        <option value="Q">분기별 (Q)</option>
-                        <option value="M">월별 (M)</option>
-                        <option value="A">연별 (A)</option>
-                    </select>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">분석 주기</label>
+                            <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none focus:border-blue-500 text-slate-200">
+                                <option value="Q">분기별 (Q)</option>
+                                <option value="M">월별 (M)</option>
+                                <option value="A">연별 (A)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">시작일</label>
+                                <input type="date" id="start-date" value="2020-01-01" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">종료일</label>
+                                <input type="date" id="end-date" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 outline-none">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <button id="btn-draw" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
-                    📈 분석 실행 (그래프 그리기)
+                    📈 분석 실행
                 </button>
             </div>
         </div>
@@ -60,64 +101,60 @@
         let allIndicators = [];
         let myChart = null;
 
-        // [핵심 수정] 중복 느낌을 없애기 위해 15가지 고대비 색상으로 전면 교체
+        // 15가지 고대비 색상 팔레트
         const chartColors = [
-            '#3b82f6', // 파랑
-            '#10b981', // 에메랄드 (초록)
-            '#f59e0b', // 호박색 (주황)
-            '#8b5cf6', // 보라
-            '#f43f5e', // 로즈 (진분홍)
-            '#0ea5e9', // 하늘색
-            '#84cc16', // 라임
-            '#d946ef', // 푸시아 (자주)
-            '#f97316', // 오렌지
-            '#6366f1', // 인디고 (남색)
-            '#22d3ee', // 시안 (청록)
-            '#dc2626', // 빨강
-            '#0d9488', // 틸
-            '#facc15', // 노랑
-            '#64748b'  // 슬레이트 (회색)
+            '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e',
+            '#0ea5e9', '#84cc16', '#d946ef', '#f97316', '#6366f1',
+            '#22d3ee', '#dc2626', '#0d9488', '#facc15', '#64748b'
         ];
 
+        // 초기화: 종료일 세팅
+        document.getElementById('end-date').value = new Date().toISOString().substring(0, 10);
+
+        // [1] 지표 목록 로드
         window.onload = async () => {
-            const res = await fetch('/api/indicator_list');
-            allIndicators = await res.json();
-            const groups = [...new Set(allIndicators.map(ind => ind.group))];
-            const filterContainer = document.getElementById('table-filter-group');
+            try {
+                const res = await fetch('/api/indicator_list');
+                allIndicators = await res.json();
+                const groups = [...new Set(allIndicators.map(ind => ind.group))];
+                const filterContainer = document.getElementById('table-filter-group');
 
-            groups.forEach((group, idx) => {
-                filterContainer.innerHTML += `
-                    <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg transition">
-                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600 focus:ring-blue-500">
-                        <span class="text-sm font-medium text-slate-300">${group}</span>
-                    </label>`;
-            });
+                groups.forEach((group) => {
+                    filterContainer.innerHTML += `
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg transition text-slate-300">
+                            <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600">
+                            <span class="text-sm font-medium">${group}</span>
+                        </label>`;
+                });
 
-            document.getElementsByName('table-group').forEach(radio => {
-                radio.onchange = (e) => updateItemCheckboxes(e.target.value);
-            });
+                document.getElementsByName('table-group').forEach(radio => {
+                    radio.onchange = (e) => updateItemCheckboxes(e.target.value);
+                });
+            } catch (err) {
+                console.error("지표 목록 로드 실패:", err);
+            }
         };
 
+        // [2] 바구니 선택 시 체크박스 업데이트
         function updateItemCheckboxes(selectedGroup) {
             const container = document.getElementById('item-checkbox-container');
             container.innerHTML = "";
             allIndicators.filter(ind => ind.group === selectedGroup).forEach(ind => {
                 container.innerHTML += `
                     <label class="flex items-center space-x-2 p-2 bg-slate-800 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer transition">
-                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-900 border-slate-600">
+                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-900 border-slate-600 focus:ring-cyan-500">
                         <span class="text-xs text-slate-300 truncate">${ind.name}</span>
                     </label>`;
             });
         }
 
+        // [3] 돈 단위 포맷팅
         function formatMoney(value) {
-            // 한은 십억원 단위 기준 (1 unit = 10억 원)
-            if (value >= 1000) {
-                return (value / 1000).toFixed(1) + '조원';
-            }
+            if (value >= 1000) return (value / 1000).toFixed(1) + '조원';
             return (value * 10).toLocaleString() + '억원';
         }
 
+        // [4] 분석 실행 버튼 클릭
         document.getElementById('btn-draw').onclick = async () => {
             const checkedBoxes = document.querySelectorAll('.ind-checkbox:checked');
             if (checkedBoxes.length === 0) return alert("분석할 지표를 골라줘 형!");
@@ -127,18 +164,28 @@
 
             const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
             const freq = document.getElementById('freq-select').value;
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
 
-            const dataPromises = selectedIds.map(id => fetch(`/api/ecos_custom?id=${id}&freq=${freq}`).then(r => r.json()));
-            const rawResults = await Promise.all(dataPromises);
-
-            document.getElementById('chart-loader').classList.add('hidden');
-            drawChart(rawResults);
+            try {
+                const dataPromises = selectedIds.map(id =>
+                    fetch(`/api/ecos_custom?id=${id}&freq=${freq}&start=${start}&end=${end}`).then(r => r.json())
+                );
+                const rawResults = await Promise.all(dataPromises);
+                document.getElementById('chart-loader').classList.add('hidden');
+                drawChart(rawResults);
+            } catch (err) {
+                alert("데이터를 가져오는데 실패했어 형.");
+                document.getElementById('chart-loader').classList.add('hidden');
+            }
         };
 
+        // [5] 차트 그리기 (이중 Y축 & 15색)
         function drawChart(results) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (myChart) myChart.destroy();
 
+            // 모든 결과의 타임라인을 합쳐서 정렬 (라벨 중복 방지)
             const allLabels = [...new Set(results.flatMap(r => r.data ? r.data.map(d => d.TIME) : []))].sort();
 
             const datasets = results.map((res, idx) => {
@@ -155,7 +202,7 @@
                     tension: 0.3,
                     spanGaps: true,
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: 2,
                     pointHoverRadius: 5
                 };
             });
@@ -169,7 +216,7 @@
                     interaction: { mode: 'index', intersect: false },
                     scales: {
                         x: {
-                            ticks: { color: '#94a3b8' },
+                            ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 },
                             grid: { color: '#334155' }
                         },
                         y: {
@@ -184,7 +231,7 @@
                         y1: {
                             position: 'right',
                             ticks: {
-                                color: '#94a3b8', // [수정] 핑크색 제거하고 슬레이트 색상으로 통일
+                                color: '#94a3b8',
                                 callback: function(value) { return value + '%'; }
                             },
                             grid: { drawOnChartArea: false },
