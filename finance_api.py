@@ -64,10 +64,39 @@ ECOS_INDICATORS = {
     "asset_management": {
         "table": "141Y007", "item": "3320", "freq_list": ["A", "M", "Q"],
         "name": "자산운용회사 자산"
+    },
+    "cp_asset_finance": {
+        "table": "041Y001",
+        "item": "1040000", "item2": "1030200", "item3": "1", # 금융법인 | 기업어음 | 자산
+        "freq_list": ["A", "Q"],
+        "name": "금융법인 CP 보유(자산)"
+    },
+    # 비금융법인이 발행한 CP (부채)
+    "cp_debt_corp": {
+        "table": "041Y001",
+        "item": "1020000", "item2": "1030200", "item3": "2", # 비금융법인 | 기업어음 | 부채
+        "freq_list": ["A", "Q"],
+        "name": "비금융법인 CP 발행(부채)"
+    },
+    # 가계가 보유한 CP (자산)
+    "cp_asset_household": {
+        "table": "041Y001",
+        "item": "1010000", "item2": "1030200", "item3": "1", # 가계 | 기업어음 | 자산
+        "freq_list": ["A", "Q"],
+        "name": "가계 CP 보유(자산)"
     }
 }
 
 
+def get_ecos_data_by_id(indicator_id, freq, start_date, end_date):
+    info = ECOS_INDICATORS[indicator_id]
+
+    # 아이템 코드 조합 (item2, item3이 있으면 붙여줌)
+    item_path = info['item']
+    if 'item2' in info: item_path += f"/{info['item2']}"
+    if 'item3' in info: item_path += f"/{info['item3']}"
+
+    # ... 기존 날짜 처리 로직 동일 ...
 
 def get_ecos_data(table_code, item_code1, freq, start_date, end_date):
     s_date = start_date.replace('-', '')
