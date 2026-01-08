@@ -2,186 +2,200 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project_name }} - 통합 지표 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; }
-        body { background: var(--bg); color: var(--text); font-family: 'Pretendard', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1400px; margin: auto; }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-
-        /* 컨트롤 섹션 */
-        .controls { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-
-        /* 지표 카테고리 스타일 */
-        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .category-box { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
-        .category-title { color: var(--accent); font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; border-left: 4px solid var(--accent); padding-left: 10px; }
-
-        .indicator-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.85rem; }
-        .indicator-item { display: flex; align-items: center; cursor: pointer; }
-        .indicator-item input { margin-right: 8px; }
-
-        /* 설정 필터 */
-        .filter-group { display: flex; flex-direction: column; gap: 15px; }
-        .filter-item label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        select, input[type="date"] { width: 100%; padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid var(--border); }
-
-        .btn-update { width: 100%; padding: 15px; background: var(--accent); color: #0f172a; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; }
-        .btn-update:hover { background: #7dd3fc; }
-
-        /* 차트 영역 */
-        .chart-box { background: var(--card); padding: 20px; border-radius: 12px; height: 650px; position: relative; }
-        .loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-weight: bold; color: var(--accent); }
-    </style>
 </head>
-<body>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen p-4 md:p-8">
 
-<div class="container">
-    <div class="header">
-        <h1>🔍 Market WatchDog <small>Real-time Analysis</small></h1>
-        <a href="/" style="color: var(--accent); text-decoration: none;">◀ Back to Main</a>
-    </div>
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 border-b border-slate-700 pb-4">
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                🚀 Market WatchDog 분석 센터
+            </h1>
+            <p class="text-slate-400 mt-2">지표를 선택하고 복합 관계를 분석하세요.</p>
+        </header>
 
-    <div class="controls">
-        <div class="category-grid">
-            <div class="category-box">
-                <div class="category-title">1. 시장 금리 (연%)</div>
-                <div class="indicator-list">
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="cp_91d" checked> CP(91일)</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="MSB"> 통안증권(91일)</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="corp_bond_aa"> 회사채(AA-)</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="corp_bond_bbb"> 회사채(BBB-)</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="corp_bond_aa_private"> 회사채(민평)</label>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-blue-400 font-bold mb-4 flex items-center">
+                    <span class="mr-2">1️⃣</span> 통계 바구니 선택
+                </h3>
+                <div class="space-y-3" id="table-filter-group">
+                    </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-cyan-400 font-bold mb-4 flex items-center">
+                    <span class="mr-2">2️⃣</span> 세부 지표 담기 (중복 가능)
+                </h3>
+                <div id="item-checkbox-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 h-40 overflow-y-auto pr-2 custom-scrollbar">
+                    <p class="text-slate-500 italic text-sm">먼저 통계 바구니를 선택해 주세요.</p>
                 </div>
             </div>
-            <div class="category-box">
-                <div class="category-title">2. 비은행 여신 (십억원)</div>
-                <div class="indicator-list">
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="loan_savings_bank"> 저축은행 여신</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="loan_credit_coop"> 신협 여신</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="loan_mutual_credit"> 상호금융 여신</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="loan_community_credit"> 새마을금고 여신</label>
+
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-emerald-400 font-bold mb-4">⚙️ 분석 옵션</h3>
+                    <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none focus:border-blue-500">
+                        <option value="Q">분기별 (Q)</option>
+                        <option value="M">월별 (M)</option>
+                        <option value="A">연별 (A)</option>
+                    </select>
                 </div>
-            </div>
-            <div class="category-box" style="grid-column: span 2;">
-                <div class="category-title">3. 비은행 보고기관별 자산 (십억원)</div>
-                <div class="indicator-list" style="grid-template-columns: repeat(4, 1fr);">
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_savings_bank"> 저축은행</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_merchant_bank"> 종금사</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_community_credit"> 새마을금고</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_credit_card"> 신용카드</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_securities"> 증권사</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_management"> 자산운용</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_life_ins"> 생보사</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="asset_nonlife_ins"> 손보사</label>
-                </div>
-            </div>
-            <div class="category-box" style="grid-column: span 2;">
-                <div class="category-title">4. 금융자산부채 (CP/가계 - 십억원)</div>
-                <div class="indicator-list" style="grid-template-columns: repeat(4, 1fr);">
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="cp_asset_finance"> 금융 CP자산</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="cp_debt_corp"> 기업 CP부채</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="household_asset"> 가계자산</label>
-                    <label class="indicator-item"><input type="checkbox" name="ids" value="household_debt"> 가계부채</label>
-                </div>
+                <button id="btn-draw" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95">
+                    📈 분석 실행 (그래프 그리기)
+                </button>
             </div>
         </div>
 
-        <div class="filter-group">
-            <div class="filter-item">
-                <label>데이터 주기</label>
-                <select id="freq">
-                    <option value="Q">분기 (Q)</option>
-                    <option value="M">월 (M)</option>
-                    <option value="A">연 (A)</option>
-                </select>
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl relative">
+            <div id="chart-loader" class="hidden absolute inset-0 bg-slate-800/80 flex items-center justify-center z-10 rounded-2xl">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
-            <div class="filter-item">
-                <label>조회 범위</label>
-                <input type="date" id="start_date" value="2010-01-01">
-                <div style="text-align: center; margin: 5px 0;">~</div>
-                <input type="date" id="end_date" value="2025-12-31">
+            <canvas id="mainChart"></canvas>
+            <div id="empty-msg" class="py-40 text-center text-slate-500 italic">
+                왼쪽 필터에서 지표를 선택하고 '분석 실행' 버튼을 눌러주세요.
             </div>
-            <button class="btn-update" onclick="runAnalysis()">📊 분석 실행</button>
         </div>
     </div>
 
-    <div class="chart-box">
-        <div id="loadingText" class="loading">ECOS 서버에서 데이터를 가져오는 중...</div>
-        <canvas id="mainChart"></canvas>
-    </div>
-</div>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+    </style>
 
-<script>
-    let chartInstance = null;
+    <script>
+        let allIndicators = [];
+        let myChart = null;
 
-    async function runAnalysis() {
-        const loading = document.getElementById('loadingText');
-        const checked = document.querySelectorAll('input[name="ids"]:checked');
-        const ids = Array.from(checked).map(cb => cb.value);
-        const freq = document.getElementById('freq').value;
-        const start = document.getElementById('start_date').value;
-        const end = document.getElementById('end_date').value;
+        // 1. 페이지 로드 시 지표 리스트 가져오기
+        window.onload = async () => {
+            const res = await fetch('/api/indicator_list');
+            allIndicators = await res.json();
 
-        if (ids.length === 0) return alert("분석할 지표를 최소 하나 골라줘 형!");
+            // 그룹(Table) 목록 추출
+            const groups = [...new Set(allIndicators.map(ind => ind.group))];
+            const filter1Group = document.getElementById('table-filter-group');
 
-        loading.style.display = 'block';
+            groups.forEach((group, idx) => {
+                const id = `group-${idx}`;
+                filter1Group.innerHTML += `
+                    <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg transition">
+                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600 focus:ring-blue-600 focus:ring-2">
+                        <span class="text-sm font-medium text-slate-300">${group}</span>
+                    </label>
+                `;
+            });
 
-        try {
-            const promises = ids.map(id =>
-                fetch(`/api/ecos_custom?id=${id}&freq=${freq}&start=${start}&end=${end}`).then(r => r.json())
+            // 1번 필터 변경 이벤트
+            document.getElementsByName('table-group').forEach(radio => {
+                radio.onchange = (e) => updateItemCheckboxes(e.target.value);
+            });
+        };
+
+        // 2. 2번 필터(체크박스) 업데이트
+        function updateItemCheckboxes(selectedGroup) {
+            const container = document.getElementById('item-checkbox-container');
+            container.innerHTML = "";
+
+            const filtered = allIndicators.filter(ind => ind.group === selectedGroup);
+            filtered.forEach(ind => {
+                container.innerHTML += `
+                    <label class="flex items-center space-x-2 p-2 bg-slate-900 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer transition">
+                        <input type="checkbox" value="${ind.id}" data-name="${ind.name}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-800 border-slate-600">
+                        <span class="text-xs text-slate-300 truncate">${ind.name}</span>
+                    </label>
+                `;
+            });
+        }
+
+        // 3. 그래프 그리기 실행
+        document.getElementById('btn-draw').onclick = async () => {
+            const checkedBoxes = document.querySelectorAll('.ind-checkbox:checked');
+            if (checkedBoxes.length === 0) return alert("분석할 지표를 최소 하나는 골라라!");
+
+            document.getElementById('chart-loader').classList.remove('hidden');
+            document.getElementById('empty-msg').classList.add('hidden');
+
+            const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+            const freq = document.getElementById('freq-select').value;
+
+            // 데이터 병렬 수집
+            const dataPromises = selectedIds.map(id =>
+                fetch(`/api/ecos_custom?id=${id}&freq=${freq}`).then(r => r.json())
             );
-            const allData = await Promise.all(promises);
 
+            const rawResults = await Promise.all(dataPromises);
+            document.getElementById('chart-loader').classList.add('hidden');
+
+            drawChart(rawResults);
+        };
+
+        function drawChart(results) {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
+            if (myChart) myChart.destroy();
 
-            // 모든 데이터의 날짜 통합 및 정렬
-            const labels = [...new Set(allData.flatMap(dataset => dataset.map(d => d.TIME)))].sort();
-            const colors = ['#38bdf8', '#fb7185', '#34d399', '#fbbf24', '#a78bfa', '#818cf8', '#f472b6', '#2dd4bf'];
+            // 모든 결과셋의 TIME(라벨) 합쳐서 정렬
+            const allLabels = [...new Set(results.flatMap(r => r.data.map(d => d.TIME)))].sort();
 
-            const datasets = allData.map((data, i) => {
-                const labelName = Array.from(checked)[i].parentElement.innerText.trim();
+            const datasets = results.map((res, idx) => {
+                const color = getChartColor(idx);
+                // 단위(unit_type)에 따라 좌축(money) / 우축(rate) 설정
+                const yAxisID = res.unit_type === 'rate' ? 'y1' : 'y';
+
+                // 데이터 매핑
+                const dataMap = new Map(res.data.map(d => [d.TIME, d.DATA_VALUE]));
+                const dataPoints = allLabels.map(label => dataMap.get(label) || null);
+
                 return {
-                    label: labelName,
-                    data: labels.map(l => {
-                        const found = data.find(d => d.TIME === l);
-                        return found ? found.DATA_VALUE : null;
-                    }),
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: colors[i % colors.length] + '11',
+                    label: res.name,
+                    data: dataPoints,
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    yAxisID: yAxisID,
+                    tension: 0.3,
                     borderWidth: 2,
-                    tension: 0.2,
-                    pointRadius: 1
+                    pointRadius: 2
                 };
             });
 
-            chartInstance = new Chart(ctx, {
+            myChart = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets },
+                data: { labels: allLabels, datasets: datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        tooltip: { backgroundColor: '#1e293b' }
+                    },
                     scales: {
                         x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#f8fafc', font: { size: 12 } } }
+                        y: { // 좌측 축: 자금 규모 (조 단위 등)
+                            title: { display: true, text: '금액 (조 원/십억 원)', color: '#94a3b8' },
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y1: { // 우측 축: 금리 (%)
+                            position: 'right',
+                            title: { display: true, text: '금리 (%)', color: '#f472b6' },
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#f472b6' }
+                        }
                     }
                 }
             });
-        } catch (e) {
-            alert("데이터 호출 실패! 서버 터미널이나 ECOS 키를 확인해봐.");
-        } finally {
-            loading.style.display = 'none';
         }
-    }
 
-    window.onload = runAnalysis;
-</script>
+        function getChartColor(idx) {
+            const colors = ['#3b82f6', '#f472b6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+            return colors[idx % colors.length];
+        }
+    </script>
 </body>
 </html>

@@ -1,97 +1,66 @@
 import requests
 import pandas as pd
+from datetime import datetime
 
 ECOS_KEY = "WHBQAV87QHCLYN0XIC02"
 
 ECOS_INDICATORS = {
-    # 1. 시장금리 (721Y001 - 월, 분기, 연)
-    "cp_91d": {"table": "721Y001", "item": "4020000", "freq_list": ["A", "M", "Q"], "name": "CP(91일) 금리"},
-    "MSB": {"table": "721Y001", "item": "6010300", "freq_list": ["A", "M", "Q"], "name": "통안증권(91일)"},
-    "corp_bond_aa": {"table": "721Y001", "item": "7020000", "freq_list": ["A", "M", "Q"], "name": "회사채(3년, AA-)"},
-    "corp_bond_bbb": {"table": "721Y001", "item": "7030000", "freq_list": ["A", "M", "Q"], "name": "회사채(3년, BBB-)"},
-    "corp_bond_aa_private": {"table": "721Y001", "item": "8010000", "freq_list": ["A", "M", "Q"], "name": "회사채(3년, AA-, 민평)"},
+    # 시장 금리
+    "KOR_BASE_RATE": {"table": "722Y001", "item_code1": "0101000", "freq_list": ["A", "M", "Q"], "unit_type": "rate",
+                      "name": "한국은행 기준금리", "group": "시장금리"},
+    "KOR_10Y_BOND": {"table": "102Y002", "item_code1": "010210000", "freq_list": ["A", "M", "Q", "D"],
+                     "unit_type": "rate", "name": "국고채(10년)", "group": "시장금리"},
+    "KOR_3Y_BOND": {"table": "102Y002", "item_code1": "010200000", "freq_list": ["A", "M", "Q", "D"],
+                    "unit_type": "rate", "name": "국고채(3년)", "group": "시장금리"},
+    "KOR_CP_91D": {"table": "102Y001", "item_code1": "010502000", "freq_list": ["A", "M", "Q", "D"],
+                   "unit_type": "rate", "name": "CP(91일)", "group": "시장금리"},
 
-    # 2. 비은행금융기관 여신 (005Y003 - 월, 분기, 연)
-    "loan_savings_bank": {"table": "005Y003", "item": "0000001", "freq_list": ["A", "M", "Q"], "name": "상호저축은행 여신"},
-    "loan_credit_coop": {"table": "005Y003", "item": "0000002", "freq_list": ["A", "M", "Q"], "name": "신용협동조합 여신"},
-    "loan_mutual_credit": {"table": "005Y003", "item": "0000003", "freq_list": ["A", "M", "Q"], "name": "상호금융 여신"},
-    "loan_community_credit": {"table": "005Y003", "item": "0000004", "freq_list": ["A", "M", "Q"], "name": "새마을금고 여신"},
+    # 비은행금융기관 여신
+    "TOTAL_NON_BANK": {"table": "111Y009", "item_code1": "1000000", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "비은행 여신 합계", "group": "비은행금융기관 여신"},
+    "MERCHANT_BANKING": {"table": "111Y009", "item_code1": "1120300", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "종합금융회사 여신", "group": "비은행금융기관 여신"},
+    "ASSET_MANAGEMENT": {"table": "111Y009", "item_code1": "1120400", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "자산운용회사 여신", "group": "비은행금융기관 여신"},
+    "TRUST_ACCOUNTS": {"table": "111Y009", "item_code1": "1120500", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "신탁회사 여신", "group": "비은행금융기관 여신"},
+    "SAVINGS_BANK": {"table": "111Y009", "item_code1": "1120600", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "상호저축은행 여신", "group": "비은행금융기관 여신"},
+    "CREDIT_UNIONS": {"table": "111Y009", "item_code1": "1120700", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "신용협동조합 여신", "group": "비은행금융기관 여신"},
+    "MUTUAL_CREDITS": {"table": "111Y009", "item_code1": "1120800", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "상호금융 여신", "group": "비은행금융기관 여신"},
+    "COMMUNITY_CREDIT_COOP": {"table": "111Y009", "item_code1": "1121000", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "새마을금고 여신", "group": "비은행금융기관 여신"},
+    "LIFE_INSURANCE": {"table": "111Y009", "item_code1": "1250000", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "생명보험 여신", "group": "비은행금융기관 여신"},
+    "OTHER_FINANCIAL": {"table": "111Y009", "item_code1": "1290000", "freq_list": ["A", "M", "Q"], "unit_type": "money", "name": "기타 비은행 여신", "group": "비은행금융기관 여신"},
+    # (다른 비은행 지표들도 같은 방식으로 'group': '비은행금융기관 여신' 추가)
 
-    # 3. 비은행금융기관 자산 (141Y007 - 월, 분기, 연)
-    "asset_savings_bank": {"table": "141Y007", "item": "0520", "freq_list": ["A", "M", "Q"], "name": "상호저축은행 자산"},
-    "asset_merchant_bank": {"table": "141Y007", "item": "0920", "freq_list": ["A", "M", "Q"], "name": "종합금융회사 자산"},
-    "asset_credit_coop": {"table": "141Y007", "item": "1120", "freq_list": ["A", "M", "Q"], "name": "신용협동기구 자산"},
-    "asset_mutual_credit": {"table": "141Y007", "item": "1220", "freq_list": ["A", "M", "Q"], "name": "상호금융 자산"},
-    "asset_community_credit": {"table": "141Y007", "item": "1320", "freq_list": ["A", "M", "Q"], "name": "새마을금고 자산"},
-    "asset_credit_card": {"table": "141Y007", "item": "1420", "freq_list": ["A", "M", "Q"], "name": "신용카드회사 자산"},
-    "asset_installment_fin": {"table": "141Y007", "item": "1520", "freq_list": ["A", "M", "Q"], "name": "할부금융회사 자산"},
-    "asset_leasing": {"table": "141Y007", "item": "1620", "freq_list": ["A", "M", "Q"], "name": "리스회사 자산"},
-    "asset_venture_cap": {"table": "141Y007", "item": "1720", "freq_list": ["A", "M", "Q"], "name": "신기술사업금융회사 자산"},
-    "asset_life_ins": {"table": "141Y007", "item": "2120", "freq_list": ["A", "M", "Q"], "name": "생명보험회사 자산"},
-    "asset_nonlife_ins": {"table": "141Y007", "item": "2220", "freq_list": ["A", "M", "Q"], "name": "손해보험회사 자산"},
-    "asset_post_ins": {"table": "141Y007", "item": "2320", "freq_list": ["A", "M", "Q"], "name": "우체국보험 자산"},
-    "asset_securities": {"table": "141Y007", "item": "3120", "freq_list": ["A", "M", "Q"], "name": "증권회사 자산"},
-    "asset_management": {"table": "141Y007", "item": "3320", "freq_list": ["A", "M", "Q"], "name": "자산운용회사 자산"},
-
-    # 4. 금융자산부채잔액표 (041Y001 - 분기, 연)
-    "cp_asset_finance": {
-        "table": "041Y001", "item": "1040000", "item2": "1030200", "item3": "1",
-        "freq_list": ["A", "Q"], "name": "금융법인 CP(자산)"
-    },
-    "cp_debt_corp": {
-        "table": "041Y001", "item": "1020000", "item2": "1030200", "item3": "2",
-        "freq_list": ["A", "Q"], "name": "비금융법인 CP(부채)"
-    },
-    "household_asset": {
-        "table": "041Y001", "item": "1010000", "freq_list": ["A", "Q"], "name": "가계 및 비영리단체 금융자산"
-    },
-    "household_debt": {
-        "table": "041Y001", "item": "2010000", "freq_list": ["A", "Q"], "name": "가계 및 비영리단체 금융부채"
-    }
+    # 금융자산부채잔액표
+    "FINANCE_CORP_ASSET": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "FA",
+                           "freq_list": ["A", "Q"], "unit_type": "money", "name": "금융법인 자산", "group": "금융자산부채잔액표"},
+    "FINANCE_CORP_LIAB": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "FL",
+                          "freq_list": ["A", "Q"], "unit_type": "money", "name": "금융법인 부채", "group": "금융자산부채잔액표"},
+    "NON_FINANCE_CORP_ASSET": {"table": "102Y004", "item_code1": "S11", "item_code2": "0000000", "item_code3": "FA",
+                               "freq_list": ["A", "Q"], "unit_type": "money", "name": "비금융법인 자산", "group": "금융자산부채잔액표"},
+    "NON_FINANCE_CORP_LIAB": {"table": "102Y004", "item_code1": "S11", "item_code2": "0000000", "item_code3": "FL",
+                              "freq_list": ["A", "Q"], "unit_type": "money", "name": "비금융법인 부채", "group": "금융자산부채잔액표"}
 }
 
 
-def get_ecos_data_by_id(indicator_id, freq, start_date, end_date):
-    info = ECOS_INDICATORS[indicator_id]
-
-    # 아이템 코드 조합 (item2, item3이 있으면 붙여줌)
-    item_path = info['item']
-    if 'item2' in info: item_path += f"/{info['item2']}"
-    if 'item3' in info: item_path += f"/{info['item3']}"
-
-    # ... 기존 날짜 처리 로직 동일 ...
-
-def get_ecos_data(table_code, item_code1, freq, start_date, end_date):
-    s_date = start_date.replace('-', '')
-    e_date = end_date.replace('-', '')
-
-    if freq == 'M':
-        s_date, e_date = s_date[:6], e_date[:6]
-    elif freq == 'Q':
-        s_month = int(s_date[4:6])
-        e_month = int(e_date[4:6])
-        s_date = f"{s_date[:4]}{(s_month - 1) // 3 + 1}"
-        e_date = f"{e_date[:4]}{(e_month - 1) // 3 + 1}"
-
-    url = f"http://ecos.bok.or.kr/api/StatisticSearch/{ECOS_KEY}/json/kr/1/100/{table_code}/{freq}/{s_date}/{e_date}/{item_code1}/"
-
-    # [진단] 요청하는 URL을 터미널에 출력
-    print(f"DEBUG: 요청 URL -> {url}")
+def get_ecos_data(table_code, item_code1, freq, start_date, end_date, item_code2=None, item_code3=None):
+    # 빈 날짜 입력 시 ValueError 방지
+    s_date = str(start_date or "20230101").replace('-', '')
+    e_date = str(end_date or datetime.now().strftime('%Y%m%d')).replace('-', '')
 
     try:
+        if freq == 'Q':
+            # 6자리 보장 로직 (202301 -> 20231)
+            s_date = f"{s_date[:4]}{(int(s_date[4:6]) - 1) // 3 + 1}"
+            e_date = f"{e_date[:4]}{(int(e_date[4:6]) - 1) // 3 + 1}"
+
+        item_path = item_code1
+        if item_code2: item_path += f"/{item_code2}"
+        if item_code3: item_path += f"/{item_code3}"
+
+        url = f"http://ecos.bok.or.kr/api/StatisticSearch/{ECOS_KEY}/json/kr/1/100/{table_code}/{freq}/{s_date}/{e_date}/{item_path}/"
         res = requests.get(url)
         data = res.json()
-
         if 'StatisticSearch' in data:
-            rows = data['StatisticSearch']['row']
-            print(f"DEBUG: 데이터 가져오기 성공! ({len(rows)}건)")
-            df = pd.DataFrame(rows)
-            df['DATA_VALUE'] = pd.to_numeric(df['DATA_VALUE'])
-            return df[['TIME', 'DATA_VALUE']].to_dict(orient='records')
-        else:
-            # [진단] 에러가 났을 때 한은이 뭐라고 하는지 출력
-            print(f"DEBUG: 한은 응답 에러 -> {data}")
-            return []
+            return data['StatisticSearch']['row']
+        return []
     except Exception as e:
-        print(f"DEBUG: 시스템 에러 -> {e}")
+        print(f"DEBUG 에러: {e}")
         return []

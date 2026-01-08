@@ -2,7 +2,8 @@ import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from models import db, User  # models.py에서 가져옴
 from crawler import get_multiple_keywords_news  # crawler.py에서 가져옴
-from finance_api import get_ecos_data
+from finance_api import get_ecos_data, ECOS_INDICATORS
+
 
 app = Flask(__name__)
 app.secret_key = "watchdog_secret"
@@ -81,17 +82,28 @@ def get_infomax_news():
     }
     return jsonify(data)
 
+@app.route('/api/indicator_list')
+def get_indicator_list():
+    # group 정보까지 같이 보내서 프론트에서 필터링 가능하게 함
+    list_data = [{"id": k, "name": v['name'], "group": v['group']} for k, v in ECOS_INDICATORS.items()]
+    return jsonify(list_data)
+
 @app.route('/api/ecos_custom')
 def ecos_custom():
-    # 브라우저가 보낸 파라미터 읽기
-    table = request.args.get('table')
-    item = request.args.get('item')
-    freq = request.args.get('freq')
-    start = request.args.get('start')
-    end = request.args.get('end')
+    indicator_id = request.args.get('id')
+    freq = request.args.get('freq', 'Q')
+    start = request.args.get('start', '')
+    end = request.args.get('end', '')
 
-    data = get_ecos_data(table, item, freq, start, end)
-    return jsonify(data)
+    config = ECOS_INDICATORS.get(indicator_id.upper() if indicator_id else "")
+    if not config: return jsonify([])
+
+    data = get_ecos_data(
+        config['table'], config['item_code1'], freq, start, end,
+        config.get('item_code2'), config.get('item_code3')
+    )
+    # 그래프를 그리기 위해 unit_type(rate인지 money인지) 정보도 살짝 끼워줌
+    return jsonify({"data": data, "unit_type": config['unit_type'], "name": config['name']})
 
 if __name__ == '__main__':
     print(f"[{PROJECT_NAME}] 서버 가동 시작...")
