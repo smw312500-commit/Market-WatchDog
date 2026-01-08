@@ -92,18 +92,23 @@ def get_indicator_list():
 def ecos_custom():
     indicator_id = request.args.get('id')
     freq = request.args.get('freq', 'Q')
-    start = request.args.get('start', '')
+    start = request.args.get('start', '2023-01-01')
     end = request.args.get('end', '')
 
     config = ECOS_INDICATORS.get(indicator_id.upper() if indicator_id else "")
-    if not config: return jsonify([])
+    if not config: return jsonify({"data": [], "unit_type": "rate", "name": "Unknown"})
 
-    data = get_ecos_data(
+    raw_data = get_ecos_data(
         config['table'], config['item_code1'], freq, start, end,
         config.get('item_code2'), config.get('item_code3')
     )
-    # 그래프를 그리기 위해 unit_type(rate인지 money인지) 정보도 살짝 끼워줌
-    return jsonify({"data": data, "unit_type": config['unit_type'], "name": config['name']})
+
+    # [수정] HTML이 기대하는 형식(데이터+단위+이름)으로 포장해서 보내기
+    return jsonify({
+        "data": raw_data,
+        "unit_type": config['unit_type'],
+        "name": config['name']
+    })
 
 if __name__ == '__main__':
     print(f"[{PROJECT_NAME}] 서버 가동 시작...")

@@ -46,10 +46,14 @@ def get_ecos_data(table_code, item_code1, freq, start_date, end_date, item_code2
     e_date = str(end_date or datetime.now().strftime('%Y%m%d')).replace('-', '')
 
     try:
-        if freq == 'Q':
-            # 6자리 보장 로직 (202301 -> 20231)
-            s_date = f"{s_date[:4]}{(int(s_date[4:6]) - 1) // 3 + 1}"
-            e_date = f"{e_date[:4]}{(int(e_date[4:6]) - 1) // 3 + 1}"
+        if freq == 'M':
+            s_date, e_date = s_date[:6], e_date[:6]
+        elif freq == 'Q':
+            # 핵심 수정: 숫자 사이에 'Q'를 꼭 넣어야 함! (2024Q1 형식)
+            s_month = int(s_date[4:6]) if len(s_date) >= 6 else 1
+            e_month = int(e_date[4:6]) if len(e_date) >= 6 else 12
+            s_date = f"{s_date[:4]}Q{(s_month - 1) // 3 + 1}"
+            e_date = f"{e_date[:4]}Q{(e_month - 1) // 3 + 1}"
 
         item_path = item_code1
         if item_code2: item_path += f"/{item_code2}"
