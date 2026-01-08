@@ -8,10 +8,10 @@ ECOS_KEY = "WHBQAV87QHCLYN0XIC02"
 
 ECOS_INDICATORS = {
     # [1] 시장 금리
-    "KOR_BASE_RATE": {"table": "722Y001", "item_code1": "0101000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "한국은행 기준금리", "group": "시장금리"},
-    "CORP_BOND_3Y_AA_MINUS": {"table": "721Y002", "item_code1": "7020000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, AA-)", "group": "시장금리"},
-    "CORP_BOND_3Y_BBB_MINUS": {"table": "721Y002", "item_code1": "7030000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, BBB-)", "group": "시장금리"},
-    "CORP_BOND_3Y_AA_MINUS_PV": {"table": "721Y002", "item_code1": "8010000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, AA- 민평)", "group": "시장금리"},
+    "MSB_91D": {"table": "721Y001", "item_code1": "6010300", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "통안증권91일", "group": "시장금리"},
+    "CORP_BOND_3Y_AA_MINUS": {"table": "721Y001", "item_code1": "7020000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, AA-)", "group": "시장금리"},
+    "CORP_BOND_3Y_BBB_MINUS": {"table": "721Y001", "item_code1": "7030000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, BBB-)", "group": "시장금리"},
+    "CORP_BOND_3Y_AA_MINUS_PV": {"table": "721Y001", "item_code1": "8010000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "회사채(3년, AA- 민평)", "group": "시장금리"},
     "KOR_CP_91D": {"table": "721Y001", "item_code1": "4020000", "freq_list": ["A", "M", "Q"], "unit_type": "rate", "name": "CP(91일)", "group": "시장금리"},
 
     # [2] 비은행금융기관 여신 (항목 10개 생략 없이 꽉 채움)
