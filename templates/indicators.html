@@ -25,7 +25,7 @@
 
             <div class="lg:col-span-2 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
                 <h3 class="text-cyan-400 font-bold mb-4">2️⃣ 세부 지표 담기 (중복 가능)</h3>
-                <div id="item-checkbox-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 h-40 overflow-y-auto pr-2 custom-scrollbar">
+                <div id="item-checkbox-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 h-40 overflow-y-auto pr-2 custom-scrollbar border border-slate-700 p-2 rounded-lg bg-slate-900">
                     <p class="text-slate-500 italic text-sm">먼저 통계 바구니를 선택해 주세요.</p>
                 </div>
             </div>
@@ -33,7 +33,7 @@
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
                 <div>
                     <h3 class="text-emerald-400 font-bold mb-4">⚙️ 분석 옵션</h3>
-                    <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none">
+                    <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none focus:border-blue-500">
                         <option value="Q">분기별 (Q)</option>
                         <option value="M">월별 (M)</option>
                         <option value="A">연별 (A)</option>
@@ -60,11 +60,23 @@
         let allIndicators = [];
         let myChart = null;
 
-        // [핵심 수정] 15가지 다양한 색상 팔레트 정의
+        // [핵심 수정] 중복 느낌을 없애기 위해 15가지 고대비 색상으로 전면 교체
         const chartColors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-            '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6',
-            '#eab308', '#d946ef', '#22c55e', '#f97316', '#a855f7'
+            '#3b82f6', // 파랑
+            '#10b981', // 에메랄드 (초록)
+            '#f59e0b', // 호박색 (주황)
+            '#8b5cf6', // 보라
+            '#f43f5e', // 로즈 (진분홍)
+            '#0ea5e9', // 하늘색
+            '#84cc16', // 라임
+            '#d946ef', // 푸시아 (자주)
+            '#f97316', // 오렌지
+            '#6366f1', // 인디고 (남색)
+            '#22d3ee', // 시안 (청록)
+            '#dc2626', // 빨강
+            '#0d9488', // 틸
+            '#facc15', // 노랑
+            '#64748b'  // 슬레이트 (회색)
         ];
 
         window.onload = async () => {
@@ -75,8 +87,8 @@
 
             groups.forEach((group, idx) => {
                 filterContainer.innerHTML += `
-                    <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg">
-                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600">
+                    <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg transition">
+                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600 focus:ring-blue-500">
                         <span class="text-sm font-medium text-slate-300">${group}</span>
                     </label>`;
             });
@@ -91,14 +103,15 @@
             container.innerHTML = "";
             allIndicators.filter(ind => ind.group === selectedGroup).forEach(ind => {
                 container.innerHTML += `
-                    <label class="flex items-center space-x-2 p-2 bg-slate-900 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer">
-                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-800 border-slate-600">
+                    <label class="flex items-center space-x-2 p-2 bg-slate-800 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer transition">
+                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-900 border-slate-600">
                         <span class="text-xs text-slate-300 truncate">${ind.name}</span>
                     </label>`;
             });
         }
 
         function formatMoney(value) {
+            // 한은 십억원 단위 기준 (1 unit = 10억 원)
             if (value >= 1000) {
                 return (value / 1000).toFixed(1) + '조원';
             }
@@ -129,7 +142,6 @@
             const allLabels = [...new Set(results.flatMap(r => r.data ? r.data.map(d => d.TIME) : []))].sort();
 
             const datasets = results.map((res, idx) => {
-                // [핵심 수정] 15개 색상 팔레트에서 순서대로 색을 가져옴
                 const color = chartColors[idx % chartColors.length];
                 const dataArray = res.data || [];
                 const dataMap = new Map(dataArray.map(d => [d.TIME, d.DATA_VALUE]));
@@ -143,7 +155,8 @@
                     tension: 0.3,
                     spanGaps: true,
                     borderWidth: 2,
-                    pointRadius: 3
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 };
             });
 
@@ -155,7 +168,10 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
                         y: {
                             position: 'left',
                             ticks: {
@@ -163,22 +179,29 @@
                                 callback: function(value) { return formatMoney(value); }
                             },
                             grid: { color: '#334155' },
-                            title: { display: true, text: '자금 규모', color: '#94a3b8' }
+                            title: { display: true, text: '자금 규모', color: '#94a3b8', font: { weight: 'bold' } }
                         },
                         y1: {
                             position: 'right',
                             ticks: {
-                                color: '#94a3b8',
+                                color: '#94a3b8', // [수정] 핑크색 제거하고 슬레이트 색상으로 통일
                                 callback: function(value) { return value + '%'; }
                             },
                             grid: { drawOnChartArea: false },
-                            title: { display: true, text: '금리 (%)', color: '#94a3b8' }
+                            title: { display: true, text: '금리 (%)', color: '#94a3b8', font: { weight: 'bold' } }
                         }
                     },
                     plugins: {
                         legend: {
-                            labels: { color: '#f8fafc', padding: 20 },
+                            labels: { color: '#f8fafc', padding: 20, font: { size: 12 } },
                             position: 'top'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#3b82f6',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#334155',
+                            borderWidth: 1
                         }
                     }
                 }
