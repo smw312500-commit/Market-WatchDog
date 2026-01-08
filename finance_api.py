@@ -8,11 +8,11 @@ ECOS_INDICATORS = {
     # 시장 금리
     "KOR_BASE_RATE": {"table": "722Y001", "item_code1": "0101000", "freq_list": ["A", "M", "Q"], "unit_type": "rate",
                       "name": "한국은행 기준금리", "group": "시장금리"},
-    "KOR_10Y_BOND": {"table": "102Y002", "item_code1": "010210000", "freq_list": ["A", "M", "Q", "D"],
-                     "unit_type": "rate", "name": "국고채(10년)", "group": "시장금리"},
-    "KOR_3Y_BOND": {"table": "102Y002", "item_code1": "010200000", "freq_list": ["A", "M", "Q", "D"],
+    "KOR_1Y_BOND": {"table": "721Y001", "item_code1": "5030000", "freq_list": ["A", "M", "Q" ],
+                     "unit_type": "rate", "name": "국고채(1년)", "group": "시장금리"},
+    "KOR_3Y_BOND": {"table": "721Y001", "item_code1": "5020000", "freq_list": ["A", "M", "Q"],
                     "unit_type": "rate", "name": "국고채(3년)", "group": "시장금리"},
-    "KOR_CP_91D": {"table": "102Y001", "item_code1": "010502000", "freq_list": ["A", "M", "Q", "D"],
+    "KOR_CP_91D": {"table": "721Y001", "item_code1": "4020000", "freq_list": ["A", "M", "Q" ],
                    "unit_type": "rate", "name": "CP(91일)", "group": "시장금리"},
 
     # 비은행금융기관 여신
@@ -29,9 +29,9 @@ ECOS_INDICATORS = {
     # (다른 비은행 지표들도 같은 방식으로 'group': '비은행금융기관 여신' 추가)
 
     # 금융자산부채잔액표
-    "FINANCE_CORP_ASSET": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "FA",
+    "FINANCE_CORP_ASSET": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "A",
                            "freq_list": ["A", "Q"], "unit_type": "money", "name": "금융법인 자산", "group": "금융자산부채잔액표"},
-    "FINANCE_CORP_LIAB": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "FL",
+    "FINANCE_CORP_LIAB": {"table": "102Y004", "item_code1": "S12", "item_code2": "0000000", "item_code3": "L",
                           "freq_list": ["A", "Q"], "unit_type": "money", "name": "금융법인 부채", "group": "금융자산부채잔액표"},
     "NON_FINANCE_CORP_ASSET": {"table": "102Y004", "item_code1": "S11", "item_code2": "0000000", "item_code3": "FA",
                                "freq_list": ["A", "Q"], "unit_type": "money", "name": "비금융법인 자산", "group": "금융자산부채잔액표"},

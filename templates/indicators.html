@@ -39,13 +39,13 @@
                         <option value="A">연별 (A)</option>
                     </select>
                 </div>
-                <button id="btn-draw" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
+                <button id="btn-draw" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
                     📈 분석 실행 (그래프 그리기)
                 </button>
             </div>
         </div>
 
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl relative min-h-[500px]">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl relative min-h-[550px]">
             <div id="chart-loader" class="hidden absolute inset-0 bg-slate-800/80 flex items-center justify-center z-10 rounded-2xl">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
@@ -60,6 +60,13 @@
         let allIndicators = [];
         let myChart = null;
 
+        // [핵심 수정] 15가지 다양한 색상 팔레트 정의
+        const chartColors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+            '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6',
+            '#eab308', '#d946ef', '#22c55e', '#f97316', '#a855f7'
+        ];
+
         window.onload = async () => {
             const res = await fetch('/api/indicator_list');
             allIndicators = await res.json();
@@ -69,7 +76,7 @@
             groups.forEach((group, idx) => {
                 filterContainer.innerHTML += `
                     <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg">
-                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500">
+                        <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600">
                         <span class="text-sm font-medium text-slate-300">${group}</span>
                     </label>`;
             });
@@ -85,20 +92,16 @@
             allIndicators.filter(ind => ind.group === selectedGroup).forEach(ind => {
                 container.innerHTML += `
                     <label class="flex items-center space-x-2 p-2 bg-slate-900 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer">
-                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600">
+                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-800 border-slate-600">
                         <span class="text-xs text-slate-300 truncate">${ind.name}</span>
                     </label>`;
             });
         }
 
-        // [형을 위한 '십억원' 기반 단위 변환 함수]
         function formatMoney(value) {
-            // 한은 데이터 1단위 = 10억 원 (십억원 단위)
             if (value >= 1000) {
-                // 1,000 십억원 이상이면 '조' 단위로 표시 (예: 1500 -> 1.5조원)
                 return (value / 1000).toFixed(1) + '조원';
             }
-            // 1,000 미만이면 10을 곱해서 '억원'으로 표시 (예: 100 -> 1000억원)
             return (value * 10).toLocaleString() + '억원';
         }
 
@@ -112,7 +115,6 @@
             const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
             const freq = document.getElementById('freq-select').value;
 
-            // API 호출 (데이터 포맷: {data: [], unit_type: "", name: ""})
             const dataPromises = selectedIds.map(id => fetch(`/api/ecos_custom?id=${id}&freq=${freq}`).then(r => r.json()));
             const rawResults = await Promise.all(dataPromises);
 
@@ -124,13 +126,11 @@
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (myChart) myChart.destroy();
 
-            // 모든 결과 데이터에서 TIME(X축 라벨) 추출 및 정렬
             const allLabels = [...new Set(results.flatMap(r => r.data ? r.data.map(d => d.TIME) : []))].sort();
 
             const datasets = results.map((res, idx) => {
-                const color = ['#3b82f6', '#f472b6', '#10b981', '#f59e0b', '#8b5cf6'][idx % 5];
-
-                // 데이터가 없는 경우 방어 로직
+                // [핵심 수정] 15개 색상 팔레트에서 순서대로 색을 가져옴
+                const color = chartColors[idx % chartColors.length];
                 const dataArray = res.data || [];
                 const dataMap = new Map(dataArray.map(d => [d.TIME, d.DATA_VALUE]));
 
@@ -139,7 +139,7 @@
                     data: allLabels.map(label => dataMap.get(label) || null),
                     borderColor: color,
                     backgroundColor: color + '20',
-                    yAxisID: res.unit_type === 'rate' ? 'y1' : 'y', // 금리(rate)는 우측축, 금액(money)은 좌측축
+                    yAxisID: res.unit_type === 'rate' ? 'y1' : 'y',
                     tension: 0.3,
                     spanGaps: true,
                     borderWidth: 2,
@@ -155,11 +155,8 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { color: '#334155' }
-                        },
-                        y: { // 좌측 축: 자금 규모 (조원/억원)
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: {
                             position: 'left',
                             ticks: {
                                 color: '#94a3b8',
@@ -168,18 +165,21 @@
                             grid: { color: '#334155' },
                             title: { display: true, text: '자금 규모', color: '#94a3b8' }
                         },
-                        y1: { // 우측 축: 금리 (%)
+                        y1: {
                             position: 'right',
                             ticks: {
-                                color: '#f472b6',
+                                color: '#94a3b8',
                                 callback: function(value) { return value + '%'; }
                             },
                             grid: { drawOnChartArea: false },
-                            title: { display: true, text: '금리 (%)', color: '#f472b6' }
+                            title: { display: true, text: '금리 (%)', color: '#94a3b8' }
                         }
                     },
                     plugins: {
-                        legend: { labels: { color: '#f8fafc' } }
+                        legend: {
+                            labels: { color: '#f8fafc', padding: 20 },
+                            position: 'top'
+                        }
                     }
                 }
             });
