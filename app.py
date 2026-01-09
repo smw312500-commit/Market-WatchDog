@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from models import db, User  # models.py에서 가져옴
 from crawler import get_multiple_keywords_news  # crawler.py에서 가져옴
-from finance_api import get_ecos_data, ECOS_INDICATORS
+from finance_api import get_ecos_data, get_local_data, ECOS_INDICATORS
 
 
 app = Flask(__name__)
@@ -84,31 +84,27 @@ def get_infomax_news():
 
 @app.route('/api/indicator_list')
 def get_indicator_list():
-    # group 정보까지 같이 보내서 프론트에서 필터링 가능하게 함
-    list_data = [{"id": k, "name": v['name'], "group": v['group']} for k, v in ECOS_INDICATORS.items()]
+    # source 정보를 포함해서 1번/4번 칸 분리 가능하게 전달
+    list_data = [{"id": k, "name": v['name'], "group": v['group'], "source": v.get('source', 'API')} for k, v in ECOS_INDICATORS.items()]
     return jsonify(list_data)
 
 @app.route('/api/ecos_custom')
 def ecos_custom():
-    indicator_id = request.args.get('id')
+    indicator_id = request.args.get('id', '').upper()
     freq = request.args.get('freq', 'Q')
     start = request.args.get('start', '2023-01-01')
     end = request.args.get('end', '')
 
-    config = ECOS_INDICATORS.get(indicator_id.upper() if indicator_id else "")
-    if not config: return jsonify({"data": [], "unit_type": "rate", "name": "Unknown"})
+    config = ECOS_INDICATORS.get(indicator_id)
+    if not config: return jsonify({"data": [], "name": "Unknown", "unit_type": "rate"})
 
-    raw_data = get_ecos_data(
-        config['table'], config['item_code1'], freq, start, end,
-        config.get('item_code2'), config.get('item_code3')
-    )
+    if config.get('source') == 'LOCAL':
+        raw_data = get_local_data(config, freq)
+    else:
+        raw_data = get_ecos_data(config['table'], config['item_code1'], freq, start, end, config.get('item_code2'),
+                                 config.get('item_code3'))
 
-    # [수정] HTML이 기대하는 형식(데이터+단위+이름)으로 포장해서 보내기
-    return jsonify({
-        "data": raw_data,
-        "unit_type": config['unit_type'],
-        "name": config['name']
-    })
+    return jsonify({"data": raw_data, "unit_type": config['unit_type'], "name": config['name']})
 
 if __name__ == '__main__':
     print(f"[{PROJECT_NAME}] 서버 가동 시작...")
