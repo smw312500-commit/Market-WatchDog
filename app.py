@@ -5,6 +5,8 @@ from crawler import get_multiple_keywords_news  # crawler.py에서 가져옴
 from finance_api import get_ecos_data, get_local_data, ECOS_INDICATORS
 import pandas as pd
 from datetime import datetime, timedelta
+import numpy as np
+import json
 
 app = Flask(__name__)
 app.secret_key = "watchdog_secret"
@@ -113,9 +115,9 @@ def process_cp_data():
 
 def process_card2_data():
     """
-    [카드 2번 엔진]
-    1. CP만기별 발행현황.xlsx -> '3개월이하' 추출
-    2. 단기사채 발행실적.xlsx -> '총합계' 추출
+    [카드 2번 엔진 - 단위: 조 원]
+    1. CP만기별 발행현황.xlsx -> '3개월이하' 추출 (단위 변환: 억 -> 조)
+    2. 단기사채 발행실적.xlsx -> '총합계' 추출 (단위 변환: 억 -> 조)
     3. 최근 5분기 데이터 결합
     """
     cp_path = os.path.join(DATA_DIR, 'CP만기별 발행현황.xlsx')
@@ -138,25 +140,25 @@ def process_card2_data():
         st_total = df_st[df_st['항목'] == '총합계'].iloc[:, 2:].T
         st_total.columns = ['st_bond_total']
 
-        # 3. 데이터 결합 (날짜 맞추기)
+        # 3. 데이터 결합 및 단위 변환
         combined = pd.concat([cp_3m, st_total], axis=1).dropna()
+
+        # [핵심] 숫자로 변환 후 10,000으로 나눠서 '조 원' 단위로 변경
+        combined['cp_under_3m'] = pd.to_numeric(combined['cp_under_3m'], errors='coerce') / 10000
+        combined['st_bond_total'] = pd.to_numeric(combined['st_bond_total'], errors='coerce') / 10000
 
         # 날짜 포맷 정리 (2024/Q4)
         combined.index = combined.index.str.replace('년 ', '/Q').str.replace('월', '').str.replace('03', '1').str.replace(
             '06', '2').str.replace('09', '3').str.replace('12', '4')
 
-        # 숫자로 변환
-        combined['cp_under_3m'] = pd.to_numeric(combined['cp_under_3m'], errors='coerce')
-        combined['st_bond_total'] = pd.to_numeric(combined['st_bond_total'], errors='coerce')
-
         # 4. 최근 5분기만 자르기
         result = combined.tail(5).reset_index().rename(columns={'index': '분기'})
 
-        # 5. 저장 (나중에 확인용)
+        # 5. 저장
         save_path = os.path.join(PREPROCESS_DIR, 'cp_단기사채_결합_결과.csv')
         result.to_csv(save_path, index=False, encoding='utf-8-sig')
 
-        print("✅ 2번 카드(CP 3M + 단기사채) 가공 성공!")
+        print("✅ 2번 카드(CP 3M + 단기사채) 가공 성공! (단위: 조 원)")
         return result
 
     except Exception as e:
@@ -166,8 +168,8 @@ def process_card2_data():
 
 def process_card3_data():
     """
-    한은 API에서 비금융법인 CP 부채 잔액을 가져와서
-    전분기 대비 증감액(Delta)을 계산함
+    [카드 3번 엔진]
+    비금융법인 CP 부채 '전체 잔액(절대액)'을 조 단위로 환산
     """
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 2)).strftime("%Y%m%d")
@@ -181,19 +183,21 @@ def process_card3_data():
             item_code2=c_non.get('item_code2'), item_code3=c_non.get('item_code3')
         )
 
-        if not non_fin_data: return None
+        if not non_fin_data:
+            return [0] * 5
 
         df = pd.DataFrame(non_fin_data).set_index('TIME')
         df['DATA_VALUE'] = pd.to_numeric(df['DATA_VALUE'], errors='coerce')
 
-        # 변화량(Delta) 계산: 현재 - 이전
-        df['delta'] = df['DATA_VALUE'].diff()
+        # [수정] 증감량(diff) 계산을 삭제하고 '전체 잔액'을 조 단위로 환산
+        # 십억 원 단위 -> 1,000으로 나누면 '조 원'
+        df['total_balance_trillion'] = df['DATA_VALUE'] / 1000
 
-        # 최근 5분기만 추출
-        result = df.tail(5).reset_index()
-        return result['delta'].fillna(0).tolist()
+        # 최근 5분기의 전체 잔액 리스트 반환
+        return df['total_balance_trillion'].tail(5).tolist()
+
     except Exception as e:
-        print(f"🔥 3번 에러: {e}")
+        print(f"3번 가공 에러: {e}")
         return [0] * 5
 
 def process_cp_proxy_data():
@@ -235,7 +239,7 @@ def process_cp_proxy_data():
         )
 
         if not fin_data or not non_fin_data:
-            print("❌ API 호출은 성공했으나 데이터가 비어있어 형. 날짜나 코드를 확인해봐.")
+            print(" API 호출은 성공했으나 데이터가 비어있어 . 날짜나 코드를 확인해봐.")
             return None
 
         # [3] 가공 로직
@@ -273,56 +277,114 @@ def process_cp_proxy_data():
         traceback.print_exc()
         return None
 
+
+def load_ml_data():
+    json_path = os.path.join(DATA_DIR, 'EWS_Final_Data.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            raw_data = json.load(f)
+
+        parsed_rows = []
+        for entry in raw_data:
+            # 탭으로 구분된 키와 값을 분리
+            key = list(entry.keys())[0]
+            val = entry[key]
+            # 컬럼명과 데이터를 결합하여 딕셔너리 생성
+            cols = key.split('\t')
+            vals = val.split('\t')
+            parsed_rows.append(dict(zip(cols, vals)))
+
+        df = pd.DataFrame(parsed_rows)
+
+        # Explanation_Top3에서 S1, S2 수치 추출 (ML 피처로 활용)
+        # 예: "S1_Accel: -7.46 | S1_Delta: -2.37 | S2_Delta: -7.73"
+        df['S1_Delta'] = df['Explanation_Top3'].str.extract(r'S1_Delta: ([-]?\d+\.\d+)').astype(float)
+        df['S2_Delta'] = df['Explanation_Top3'].str.extract(r'S2_Delta: ([-]?\d+\.\d+)').astype(float)
+
+        return df
     except Exception as e:
-        print(f"🔥 프록시 가공 엔진 내부 에러: {e}")
-        import traceback
-        traceback.print_exc()  # 어디서 에러 났는지 상세히 찍어줌
+        print(f"🔥 ML 데이터 로드 실패: {e}")
         return None
+
+# 전역 변수로 ML 데이터 로드
+ml_knowledge_base = load_ml_data()
+
+
+def analyze_market_risk_ml(current_m1, current_m3):
+    """
+    현재 지표(m1, m3)와 가장 유사한 과거 패턴을 ML 데이터셋에서 찾아 진단함
+    """
+    if ml_knowledge_base is None:
+        return "Normal", 0.1, "데이터를 로드할 수 없어."
+
+    # 현재 지표와 과거 데이터의 '거리' 계산 (유사도 측정)
+    # 1번 카드(성공률 QoQ) -> S1_Delta와 대응
+    # 3번 카드(비금융 델타) -> S2_Delta와 대응 (스케일 조정)
+
+    # 유사도 계산 (Euclidean Distance)
+    distances = np.sqrt(
+        (ml_knowledge_base['S1_Delta'] - current_m1) ** 2 +
+        (ml_knowledge_base['S2_Delta'] - (current_m3 / 100000)) ** 2  # 스케일 조정
+    )
+
+    # 가장 가까운 과거 사례 찾기
+    closest_idx = distances.idxmin()
+    match = ml_knowledge_base.loc[closest_idx]
+
+    state = match['EWS_Result_Status']
+    p_risk = float(match['p_risk'])
+    explanation = f"과거 {match['분기']}의 시장 패턴과 가장 유사합니다. 당시 지표: {match['Explanation_Top3']}"
+
+    return state, p_risk, explanation
 
 
 @app.route('/api/analysis_summary')
 def get_analysis_summary():
     try:
-        # [1] 1번 카드 엔진: 프록시 성공률 가공
-        df1 = process_cp_proxy_data()
-
-        # [2] 2번 카드 엔진: CP 3개월물 + 단기사채 총합계 가공
-        df2 = process_card2_data()
-
-        # [3] 3번 카드 엔진: 비은행권 리스크(비금융 CP 델타) 가공 (추가됨!)
-        delta3 = process_card3_data()
+        # [1] 형이 만든 기존 엔진들 그대로 유지 (절대 유지!)
+        df1 = process_cp_proxy_data()  # 1번 카드
+        df2 = process_card2_data()      # 2번 카드
+        delta3 = process_card3_data()    # 3번 카드
 
         if df1 is None or df2 is None:
-            return jsonify({"error": "데이터 가공 중 에러가 발생했어 형. 터미널 확인해봐!"}), 500
+            return jsonify({"error": "Data failure"}), 500
 
-        # 최근 5분기 데이터 추출
+        # 최근 5분기 데이터 추출 (형의 로직 유지)
         last_5_df1 = df1.tail(5)
-        # (df2는 process_card2_data 내부에서 이미 tail(5) 처리가 되어있을 거야)
         last_5_df2 = df2.tail(5)
 
-        # [4] JSON 리턴
+        # ---------------------------------------------------------
+        # [NEW] ML 진단 엔진 가동 (형이 준 JSON 데이터와 대조)
+        # ---------------------------------------------------------
+        # 최신 시점의 지표값 추출
+        current_m1 = last_5_df1['성공률_QoQ(%)'].iloc[-1]
+        current_m3 = delta3[-1]
+
+        # ML 엔진 호출 (기존에 정의한 analyze_market_risk_ml 함수 사용)
+        state, p_risk, explanation = analyze_market_risk_ml(current_m1, current_m3)
+        # ---------------------------------------------------------
+
+        # [4] JSON 리턴 (데이터는 유지, final_status만 ML 결과로 교체)
         return jsonify({
-            "labels": last_5_df1['분기'].tolist(),  # X축 라벨
-            "cp_issuance": last_5_df1['성공률_QoQ(%)'].fillna(0).tolist(),  # 1번 데이터
+            "labels": last_5_df1['분기'].tolist(),
+            "cp_issuance": last_5_df1['성공률_QoQ(%)'].fillna(0).tolist(),
 
             "maturity": {
                 "cp_3m": last_5_df2['cp_3m'].tolist() if 'cp_3m' in last_5_df2 else last_5_df2['cp_under_3m'].tolist(),
                 "st_bond": last_5_df2['st_bond'].tolist() if 'st_bond' in last_5_df2 else last_5_df2['st_bond_total'].tolist()
             },
 
-            # 3번 자리에 실제 데이터 꽂음!
             "non_bank_delta": delta3,
 
             "final_status": {
-                "state": "Normal",
-                "p_risk": 0.28,
-                "explanation": "1, 2, 3번 모든 리스크 지표가 실시간 API 및 엑셀 데이터와 동기화되었습니다."
+                "state": state,          # ML이 판단한 상태 (Normal/Caution/Crisis)
+                "p_risk": p_risk,        # ML 데이터에 적힌 실제 확률
+                "explanation": explanation # 과거 유사 사례 비교 설명
             }
         })
     except Exception as e:
         print(f"🔥 API 리턴 중 에러: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 
 # [3] API 엔드포인트
