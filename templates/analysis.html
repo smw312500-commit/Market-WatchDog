@@ -6,14 +6,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .step-card {
-            transition: all 0.5s ease; position: absolute; width: 100%; height: 100%; top: 0; left: 0;
-            opacity: 0; pointer-events: none; transform: scale(0.95); z-index: 0;
-        }
-        .step-card.active {
-            opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10;
-        }
-        canvas { padding-bottom: 25px; } /* X축 라벨 공간 확보 */
+        .step-card { transition: all 0.5s ease; position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; pointer-events: none; transform: scale(0.95); z-index: 0; }
+        .step-card.active { opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10; }
+        canvas { padding-bottom: 25px; }
     </style>
 </head>
 <body class="bg-[#0b0f1a] text-slate-200 p-8">
@@ -29,12 +24,11 @@
                         <div class="text-xs font-bold text-blue-500 mb-4 uppercase tracking-widest">Step 01. Funding Entrance</div>
                         <h3 class="text-2xl font-bold mb-6 text-white">CP 발행 성공률 증감 (QoQ)</h3>
                         <div class="h-80"><canvas id="cpChart"></canvas></div>
-                        <p class="mt-6 text-sm text-slate-500 italic">가공된 데이터(CP_발행성공률_QoQ.csv)의 최근 5분기 수치입니다.</p>
                     </div>
 
                     <div id="step-1" class="step-card bg-[#161b22] p-8 rounded-3xl border border-slate-800 border-t-4 border-t-yellow-500 shadow-2xl">
                         <div class="text-xs font-bold text-yellow-500 mb-4 uppercase tracking-widest">Step 02. Market Bottleneck</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">단기채 3M물 비중 (%)</h3>
+                        <h3 class="text-2xl font-bold mb-6 text-white">단기자금 발행 추이 (CP 3M & 단기사채)</h3>
                         <div class="h-80"><canvas id="stChart"></canvas></div>
                     </div>
 
@@ -46,20 +40,18 @@
                 </div>
 
                 <div class="flex gap-4 mt-8">
-                    <button onclick="changeCard(-1)" class="bg-slate-800 p-4 rounded-xl flex-1 font-bold border border-slate-700 hover:bg-slate-700">← PREV STORY</button>
-                    <button onclick="changeCard(1)" class="bg-blue-600 p-4 rounded-xl flex-1 font-bold hover:bg-blue-500 shadow-lg text-white">NEXT STORY →</button>
+                    <button onclick="changeCard(-1)" class="bg-slate-800 p-4 rounded-xl flex-1 font-bold border border-slate-700 hover:bg-slate-700">← PREV</button>
+                    <button onclick="changeCard(1)" class="bg-blue-600 p-4 rounded-xl flex-1 font-bold hover:bg-blue-500 text-white">NEXT →</button>
                 </div>
             </div>
 
             <div class="bg-gradient-to-br from-red-900/40 to-slate-900 p-8 rounded-3xl border border-red-500/30 h-[670px] flex flex-col justify-between">
                 <div class="text-center">
-                    <div class="text-xs font-bold text-red-400 mb-4 uppercase tracking-widest">Final Step. AI Diagnosis</div>
+                    <div class="text-xs font-bold text-red-400 mb-4 uppercase tracking-widest">AI Diagnosis</div>
                     <div id="status-tag" class="text-6xl font-black mb-6 drop-shadow-2xl">---</div>
                     <div class="text-slate-400 font-bold">위험 확률: <span id="risk-prob" class="text-white text-xl">--%</span></div>
                 </div>
-                <div class="bg-black/40 p-6 rounded-2xl border border-white/5 italic text-blue-200 text-sm leading-relaxed" id="explanation">
-                    데이터를 분석 중입니다...
-                </div>
+                <div class="bg-black/40 p-6 rounded-2xl border border-white/5 italic text-blue-200 text-sm" id="explanation">분석 중...</div>
             </div>
         </div>
     </div>
@@ -80,31 +72,41 @@
 
                 const opt = {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 20 } },
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            display: true,
-                            ticks: { color: '#ffffff', font: { size: 12, weight: 'bold' }, padding: 10 }
-                        },
+                        x: { ticks: { color: '#fff', font: { weight: 'bold' } } },
                         y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
                     }
                 };
 
-                // 1. CP 차트 그리기 (가공된 QoQ 데이터 반영)
+                // 1번 차트
                 new Chart(document.getElementById('cpChart'), {
                     type: 'bar',
-                    data: { labels: data.labels, datasets: [{ data: data.cp_issuance, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+                    data: { labels: data.labels, datasets: [{ data: data.cp_issuance, backgroundColor: '#3b82f6' }] },
                     options: opt
                 });
 
-                // (2, 3번 차트 및 진단 업데이트 로직 동일)
-                new Chart(document.getElementById('stChart'), { type: 'line', data: { labels: data.labels, datasets: [{ data: data.st_3m_ratio, borderColor: '#eab308', borderWidth: 4 }] }, options: opt });
-                new Chart(document.getElementById('nonBankChart'), { type: 'line', data: { labels: data.labels, datasets: [{ data: data.non_bank_delta, borderColor: '#ea580c', fill: true }] }, options: opt });
+                // 2번 차트 (선 2개)
+                new Chart(document.getElementById('stChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            { label: 'CP 3M', data: data.maturity.cp_3m, borderColor: '#eab308', tension: 0.3 },
+                            { label: '단기사채', data: data.maturity.st_bond, borderColor: '#34d399', tension: 0.3 }
+                        ]
+                    },
+                    options: { ...opt, plugins: { legend: { display: true, labels: { color: '#fff' } } } }
+                });
 
-                const st = document.getElementById('status-tag');
-                st.innerText = data.final_status.state;
-                st.className = `text-6xl font-black mb-6 ${data.final_status.state.includes('Crisis') ? 'text-red-500' : 'text-yellow-500'}`;
+                // 3번 차트
+                new Chart(document.getElementById('nonBankChart'), {
+                    type: 'line',
+                    data: { labels: data.labels, datasets: [{ data: data.non_bank_delta, borderColor: '#ea580c', fill: true }] },
+                    options: opt
+                });
+
+                document.getElementById('status-tag').innerText = data.final_status.state;
                 document.getElementById('risk-prob').innerText = (data.final_status.p_risk * 100).toFixed(1) + '%';
                 document.getElementById('explanation').innerText = data.final_status.explanation;
             } catch (err) { console.error(err); }
