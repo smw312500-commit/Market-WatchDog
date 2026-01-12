@@ -13,8 +13,23 @@
 </head>
 <body class="bg-[#0b0f1a] text-slate-200 p-8">
     <div class="max-w-[1400px] mx-auto">
-        <header class="mb-12 border-b border-slate-800 pb-6">
-            <h1 class="text-3xl font-black italic text-red-500 uppercase tracking-tighter">AI Market WatchDog</h1>
+        <header class="mb-12 border-b border-slate-800 pb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-black italic text-red-500 uppercase tracking-tighter cursor-pointer" onclick="location.href='/'">
+                AI Market WatchDog
+            </h1>
+
+            <div class="flex items-center gap-6">
+                <nav class="flex gap-6 mr-6 border-r border-slate-800 pr-6">
+                    <a href="/" class="text-xs font-bold text-slate-400 hover:text-white transition-colors tracking-widest">홈(뉴스)</a>
+                    <a href="#" class="text-xs font-bold text-slate-400 hover:text-white transition-colors tracking-widest">지표</a>
+                </nav>
+                <div class="flex gap-4">
+                    <button class="text-xs font-bold text-slate-300 hover:text-white transition-colors">LOGIN</button>
+                    <button class="text-xs font-bold bg-red-600 px-4 py-2 rounded-lg text-white hover:bg-red-500 transition-all shadow-lg shadow-red-600/20">
+                        SIGN UP
+                    </button>
+                </div>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -28,13 +43,13 @@
 
                     <div id="step-1" class="step-card bg-[#161b22] p-8 rounded-3xl border border-slate-800 border-t-4 border-t-yellow-500 shadow-2xl">
                         <div class="text-xs font-bold text-yellow-500 mb-4 uppercase tracking-widest">Step 02. Market Bottleneck</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">단기자금 발행 추이 (CP 3M & 단기사채)</h3>
+                        <h3 class="text-2xl font-bold mb-6 text-white">단기자금 발행 추이 (CP 3개월미만 & 단기사채)<span class="text-sm text-slate-400 ml-2">단위 : (조원)</span></h3>
                         <div class="h-80"><canvas id="stChart"></canvas></div>
                     </div>
 
                     <div id="step-2" class="step-card bg-[#161b22] p-8 rounded-3xl border border-slate-800 border-t-4 border-t-orange-600 shadow-2xl">
                         <div class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Step 03. Risk Spillover</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">비은행권 여신 증감</h3>
+                        <h3 class="text-2xl font-bold mb-6 text-white">비은행여신잔액<span class="text-sm text-slate-400 ml-2">단위 : (조원)</span></h3>
                         <div class="h-80"><canvas id="nonBankChart"></canvas></div>
                     </div>
                 </div>
@@ -92,7 +107,7 @@
                     data: {
                         labels: data.labels,
                         datasets: [
-                            { label: 'CP 3M', data: data.maturity.cp_3m, borderColor: '#eab308', tension: 0.3 },
+                            { label: 'CP 3개월미만', data: data.maturity.cp_3m, borderColor: '#eab308', tension: 0.3 },
                             { label: '단기사채', data: data.maturity.st_bond, borderColor: '#34d399', tension: 0.3 }
                         ]
                     },

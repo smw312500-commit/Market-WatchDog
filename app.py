@@ -312,59 +312,84 @@ ml_knowledge_base = load_ml_data()
 
 def analyze_market_risk_ml(current_m1, current_m3):
     """
-    현재 지표(m1, m3)와 가장 유사한 과거 패턴을 ML 데이터셋에서 찾아 진단함
+    현재 지표(m1, m3)와 가장 유사한 과거 패턴을 ML 데이터셋에서 찾아 진단합니다.
     """
     if ml_knowledge_base is None:
-        return "Normal", 0.1, "데이터를 로드할 수 없어."
-
-    # 현재 지표와 과거 데이터의 '거리' 계산 (유사도 측정)
-    # 1번 카드(성공률 QoQ) -> S1_Delta와 대응
-    # 3번 카드(비금융 델타) -> S2_Delta와 대응 (스케일 조정)
+        return "Normal", 0.1, "데이터베이스를 로드할 수 없어 분석이 제한됩니다."
 
     # 유사도 계산 (Euclidean Distance)
+    # 현재 데이터와 과거 데이터셋 간의 거리를 계산하여 가장 유사한 시점을 탐색합니다.
     distances = np.sqrt(
         (ml_knowledge_base['S1_Delta'] - current_m1) ** 2 +
-        (ml_knowledge_base['S2_Delta'] - (current_m3 / 100000)) ** 2  # 스케일 조정
+        (ml_knowledge_base['S2_Delta'] - current_m3) ** 2
     )
 
-    # 가장 가까운 과거 사례 찾기
+    # 가장 유사한 과거 사례 매칭
     closest_idx = distances.idxmin()
     match = ml_knowledge_base.loc[closest_idx]
 
     state = match['EWS_Result_Status']
     p_risk = float(match['p_risk'])
-    explanation = f"과거 {match['분기']}의 시장 패턴과 가장 유사합니다. 당시 지표: {match['Explanation_Top3']}"
+
+    # [지표 해석 로직] 전문적인 용어로 변환
+    raw_exp = match['Explanation_Top3']  # "S1_Accel: -9.28 | S1_Delta: -5.75 | S2_Delta: -1.46"
+
+    try:
+        # 문자열에서 수치 추출
+        s1_a = float(raw_exp.split('S1_Accel: ')[1].split(' |')[0])
+        s1_d = float(raw_exp.split('S1_Delta: ')[1].split(' |')[0])
+        s2_d = float(raw_exp.split('S2_Delta: ')[1])
+
+        # 수치에 따른 상태 정의
+        accel_text = "급격한 위축세" if s1_a < 0 else "회복세 전환"
+        delta_text = "하락" if s1_d < 0 else "상승"
+        short_term_text = "심화" if s2_d > 0 else "완화"
+
+        # 사용자용 최종 멘트 조립 (정중한 문체)
+        explanation = (
+            f"현재 시장 패턴은 과거 {match['분기']}의 위기 징후와 매우 유사한 것으로 분석되었습니다. "
+            f"당시 발행 시장은 {accel_text}({s1_a})를 보였으며, "
+            f"조달 성공률은 전분기 대비 {delta_text}({s1_d})하는 양상을 나타냈습니다. "
+            f"특히 단기물 쏠림 현상이 {short_term_text}({s2_d})되었던 시기이므로, 리스크 관리에 만전을 기할 필요가 있습니다."
+        )
+    except Exception as e:
+        explanation = f"현재 시장 상황은 {match['분기']}의 통계적 패턴과 유사성을 보이고 있습니다. 변동성 확대에 유의하시기 바랍니다."
 
     return state, p_risk, explanation
 
 
 @app.route('/api/analysis_summary')
+@app.route('/api/analysis_summary')
 def get_analysis_summary():
     try:
-        # [1] 형이 만든 기존 엔진들 그대로 유지 (절대 유지!)
-        df1 = process_cp_proxy_data()  # 1번 카드
-        df2 = process_card2_data()      # 2번 카드
-        delta3 = process_card3_data()    # 3번 카드
+        # [1] 기존 엔진들 호출 (변화 없음)
+        df1 = process_cp_proxy_data()
+        df2 = process_card2_data()
+        delta3 = process_card3_data()    # 현재 '잔액' 리스트 (조 단위)
 
-        if df1 is None or df2 is None:
+        if df1 is None or df2 is None or not delta3:
             return jsonify({"error": "Data failure"}), 500
 
-        # 최근 5분기 데이터 추출 (형의 로직 유지)
         last_5_df1 = df1.tail(5)
         last_5_df2 = df2.tail(5)
 
         # ---------------------------------------------------------
-        # [NEW] ML 진단 엔진 가동 (형이 준 JSON 데이터와 대조)
+        # [수정 포인트] ML 진단용 '변화량' 계산
         # ---------------------------------------------------------
-        # 최신 시점의 지표값 추출
+        # 1. 1번 카드 성공률 (QoQ)
         current_m1 = last_5_df1['성공률_QoQ(%)'].iloc[-1]
-        current_m3 = delta3[-1]
 
-        # ML 엔진 호출 (기존에 정의한 analyze_market_risk_ml 함수 사용)
-        state, p_risk, explanation = analyze_market_risk_ml(current_m1, current_m3)
+        # 2. 3번 카드 변화량 계산 (최신 잔액 - 이전 분기 잔액)
+        # delta3가 잔액 리스트이므로, 마지막 두 값의 차이를 구해야 'S2_Delta'와 매칭됨
+        if len(delta3) >= 2:
+            current_m3_delta = delta3[-1] - delta3[-2]
+        else:
+            current_m3_delta = 0  # 데이터가 부족할 경우 안전장치
+
+        # ML 엔진 호출: 잔액이 아닌 '변화량(current_m3_delta)'을 넣어줌!
+        state, p_risk, explanation = analyze_market_risk_ml(current_m1, current_m3_delta)
         # ---------------------------------------------------------
 
-        # [4] JSON 리턴 (데이터는 유지, final_status만 ML 결과로 교체)
         return jsonify({
             "labels": last_5_df1['분기'].tolist(),
             "cp_issuance": last_5_df1['성공률_QoQ(%)'].fillna(0).tolist(),
@@ -374,12 +399,13 @@ def get_analysis_summary():
                 "st_bond": last_5_df2['st_bond'].tolist() if 'st_bond' in last_5_df2 else last_5_df2['st_bond_total'].tolist()
             },
 
+            # 화면에는 형이 원하는 '잔액' 리스트 그대로 전달
             "non_bank_delta": delta3,
 
             "final_status": {
-                "state": state,          # ML이 판단한 상태 (Normal/Caution/Crisis)
-                "p_risk": p_risk,        # ML 데이터에 적힌 실제 확률
-                "explanation": explanation # 과거 유사 사례 비교 설명
+                "state": state,
+                "p_risk": p_risk,
+                "explanation": explanation
             }
         })
     except Exception as e:
