@@ -9,6 +9,7 @@ import numpy as np
 import json
 from werkzeug.security import generate_password_hash, check_password_hash  # 비밀번호 암호화 추가
 from functools import wraps
+import re
 
 app = Flask(__name__)
 
@@ -47,18 +48,23 @@ def login_required(f):
 def index():
     return render_template('index.html', project_name=PROJECT_NAME)
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username, password=password).first()
-        if user:
+
+        # 유저 찾기
+        user = User.query.filter_by(username=username).first()
+
+        # [핵심] 평문 비교 대신 check_password_hash 사용!
+        if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            session['username'] = user.username
-            return redirect(url_for('index'))
-        else:
-            return "로그인 실패! 아이디나 비번 확인."
+            return redirect(url_for('analysis'))  # 로그인 성공 시 분석 페이지로
+
+        return "<script>alert('아이디 또는 비밀번호가 틀렸습니다.'); history.back();</script>"
+
     return render_template('login.html', project_name=PROJECT_NAME, mode='login')
 
 @app.route('/logout')
@@ -67,30 +73,50 @@ def logout():
     print(" 로그아웃 완료")
     return redirect(url_for('index'))
 
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        data = request.form
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+
+        # [수정] DB에서 요구하는 필수값(user_type) 처리
+        # 만약 폼에 user_type 선택이 없다면 일단 '일반'이나 'user'로 기본값을 넣어줘야 해.
+        user_type = request.form.get('user_type', '일반')
+        company_name = request.form.get('company_name', None)  # 이건 NULL 허용일 확률이 높음
+        biz_number = request.form.get('biz_number', None)  # 이것도 마찬가지
+
+        hashed_pw = generate_password_hash(password)
+
+        # User 생성 시 모든 필요한 인자를 다 넣어줌
         new_user = User(
-            username=data['username'],
-            password=data['password'],
-            email=data['email'],
-            user_type=data['user_type'],
-            company_name=data.get('company_name'),
-            biz_number=data.get('biz_number')
+            username=username,
+            password=hashed_pw,
+            email=email,
+            user_type=user_type,  # 이 녀석이 빠져서 에러난 거야!
+            company_name=company_name,
+            biz_number=biz_number
         )
-        db.session.add(new_user)
-        db.session.commit()
-        session['user_id'] = new_user.id
-        session['username'] = new_user.username
-        return redirect(url_for('index'))
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"회원가입 에러: {e}")
+            return "<script>alert('회원가입 중 오류가 발생했습니다.'); history.back();</script>"
+
     return render_template('login.html', project_name=PROJECT_NAME, mode='signup')
 
 @app.route('/indicators')
 def indicators():
     return render_template('indicators.html', project_name=PROJECT_NAME)
 
+# [A3] 분석 페이지: 로그인 필수 적용
 @app.route('/analysis')
+@login_required  # 이 한 줄이 로그인 안 한 사람을 막아줌!
 def analysis():
     return render_template('analysis.html', project_name=PROJECT_NAME)
 
@@ -181,10 +207,11 @@ def process_card2_data():
 def process_card3_data():
     """
     [카드 3번 엔진]
-    비금융법인 CP 부채 '전체 잔액(절대액)'을 조 단위로 환산
+    한은(ECOS)에서 비금융법인 CP 부채 '전체 잔액'을 가져와 조 단위로 환산
     """
+    # 넉넉하게 최근 3년치 가져오기
     end_date = datetime.now().strftime("%Y%m%d")
-    start_date = (datetime.now() - timedelta(days=365 * 2)).strftime("%Y%m%d")
+    start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
 
     try:
         c_non = ECOS_INDICATORS['NON_FIN_CP_LIAB']
@@ -196,20 +223,23 @@ def process_card3_data():
         )
 
         if not non_fin_data:
+            print("⚠️ 3번 카드: 데이터가 없습니다.")
             return [0] * 5
 
         df = pd.DataFrame(non_fin_data).set_index('TIME')
         df['DATA_VALUE'] = pd.to_numeric(df['DATA_VALUE'], errors='coerce')
 
-        # [수정] 증감량(diff) 계산을 삭제하고 '전체 잔액'을 조 단위로 환산
-        # 십억 원 단위 -> 1,000으로 나누면 '조 원'
-        df['total_balance_trillion'] = df['DATA_VALUE'] / 1000
+        # [절대 액수 유지] 십억 원 단위 -> 조 단위 (/1000)
+        df['total_balance_trillion'] = (df['DATA_VALUE'] / 1000).round(2)
 
-        # 최근 5분기의 전체 잔액 리스트 반환
-        return df['total_balance_trillion'].tail(5).tolist()
+        # 로그 출력
+        balances = df['total_balance_trillion'].tail(5).tolist()
+        print(f"✅ 3번 카드(잔액) 가공 성공! 최신: {balances[-1]}조 원")
+
+        return balances
 
     except Exception as e:
-        print(f"3번 가공 에러: {e}")
+        print(f"🔥 3번 가공 에러: {e}")
         return [0] * 5
 
 def process_cp_proxy_data():
@@ -318,101 +348,142 @@ def load_ml_data():
         print(f"🔥 ML 데이터 로드 실패: {e}")
         return None
 
-# 전역 변수로 ML 데이터 로드
-ml_knowledge_base = load_ml_data()
+
+import re  # 상단에 re 임포트가 없다면 추가해줘!
 
 
-def analyze_market_risk_ml(current_m1, current_m3):
+def load_ml_knowledge():
+    """ 글자 속에 숨은 수치를 뽑아내서 데이터셋 구축 """
+    path = os.path.join(DATA_DIR, 'Regime_EWS_Final_Report_v3_Refined.csv')
+
+    if not os.path.exists(path):
+        print(f"⚠️ 파일 없음: {path}")
+        return None
+
+    df = None
+    for enc in ['utf-8', 'cp949', 'euc-kr']:
+        try:
+            # [수정] 탭 구분자(\t)와 인코딩 적용
+            df = pd.read_csv(path, sep='\t', encoding=enc)
+            print(f"✅ ML 데이터 로드 성공 (인코딩: {enc})")
+            break
+        except:
+            continue
+
+    if df is None: return None
+
+    try:
+        # [핵심] Explanation_Top3 문장에서 숫자만 추출해서 새로운 칸 만들기
+        # 예: "S1_Accel: -9.28 | S1_Delta: -5.75..." -> -5.75만 쏙 뽑음
+        def extract_val(text, target):
+            try:
+                # 정규표현식으로 target(예: S1_Delta) 뒤의 숫자를 찾음
+                pattern = rf"{target}:\s*([-+]?\d*\.?\d+)"
+                match = re.search(pattern, str(text))
+                return float(match.group(1)) if match else 0.0
+            except:
+                return 0.0
+
+        # 데이터프레임에 새로운 숫자 칸들을 생성
+        df['S1_Accel'] = df['Explanation_Top3'].apply(lambda x: extract_val(x, 'S1_Accel'))
+        df['S1_Delta'] = df['Explanation_Top3'].apply(lambda x: extract_val(x, 'S1_Delta'))
+        df['S2_Delta'] = df['Explanation_Top3'].apply(lambda x: extract_val(x, 'S2_Delta'))
+
+        # p_risk도 숫자로 변환
+        df['p_risk'] = pd.to_numeric(df['p_risk'], errors='coerce').fillna(0)
+
+        print("🚀 지표 데이터 추출 완료 (S1_Accel, S1_Delta, S2_Delta)")
+        return df.dropna(subset=['S1_Delta', 'S2_Delta'])
+
+    except Exception as e:
+        print(f"🔥 데이터 변환 중 오류 발생: {e}")
+        return None
+
+# 전역 변수로 데이터 로드 (서버 시작 시 한 번만)
+ml_knowledge_base = load_ml_knowledge()
+
+def analyze_market_risk_ml(current_m1, current_m3_delta):
     """
-    현재 지표(m1, m3)와 가장 유사한 과거 패턴을 ML 데이터셋에서 찾아 진단합니다.
+    current_m1: 성공률 QoQ (%)
+    current_m3_delta: 비금융 CP 부채 변화량 (조)
     """
     if ml_knowledge_base is None:
-        return "Normal", 0.1, "데이터베이스를 로드할 수 없어 분석이 제한됩니다."
+        return "Normal", 0.1, "지식 베이스를 불러올 수 없어 기본 진단을 수행합니다."
 
-    # 유사도 계산 (Euclidean Distance)
-    # 현재 데이터와 과거 데이터셋 간의 거리를 계산하여 가장 유사한 시점을 탐색합니다.
+    # [B1] 유사도 계산 (Euclidean Distance): 이제 원본 컬럼 숫자를 직접 사용함
+    # 문자열 쪼개기(split) 따위는 더 이상 필요 없음!
     distances = np.sqrt(
         (ml_knowledge_base['S1_Delta'] - current_m1) ** 2 +
-        (ml_knowledge_base['S2_Delta'] - current_m3) ** 2
+        (ml_knowledge_base['S2_Delta'] - current_m3_delta) ** 2
     )
 
     # 가장 유사한 과거 사례 매칭
     closest_idx = distances.idxmin()
     match = ml_knowledge_base.loc[closest_idx]
 
-    state = match['EWS_Result_Status']
-    p_risk = float(match['p_risk'])
+    # [B3] 코멘트 생성: 컬럼 값을 직접 읽어서 문장 조립
+    # 수치 기반으로 멘트의 강도를 조절하는 로직(E)도 살짝 가미함
+    s1_a = match['S1_Accel']
+    s1_d = match['S1_Delta']
+    s2_d = match['S2_Delta']
 
-    # [지표 해석 로직] 전문적인 용어로 변환
-    raw_exp = match['Explanation_Top3']  # "S1_Accel: -9.28 | S1_Delta: -5.75 | S2_Delta: -1.46"
+    # 가속도 상태 정의
+    if s1_a < -10:
+        accel_text = "급격한 위축세"
+    elif s1_a < 0:
+        accel_text = "완만한 하락세"
+    else:
+        accel_text = "회복세 전환"
 
-    try:
-        # 문자열에서 수치 추출
-        s1_a = float(raw_exp.split('S1_Accel: ')[1].split(' |')[0])
-        s1_d = float(raw_exp.split('S1_Delta: ')[1].split(' |')[0])
-        s2_d = float(raw_exp.split('S2_Delta: ')[1])
+    explanation = (
+        f"현재 시장 패턴은 과거 <strong>{match['분기']}</strong>의 지표와 유사합니다. "
+        f"당시 발행 시장은 <strong>{accel_text}({s1_a:.2f})</strong>를 보였으며, "
+        f"조달 성공률은 <strong>{s1_d:.2f}</strong>, 단기물 의존도는 <strong>{s2_d:.2f}</strong> 수준이었습니다."
+    )
 
-        # 수치에 따른 상태 정의
-        accel_text = "급격한 위축세" if s1_a < 0 else "회복세 전환"
-        delta_text = "하락" if s1_d < 0 else "상승"
-        short_term_text = "심화" if s2_d > 0 else "완화"
-
-        # 사용자용 최종 멘트 조립 (정중한 문체)
-        explanation = (
-            f"현재 시장 패턴은 과거 {match['분기']}의 위기 징후와 매우 유사한 것으로 분석되었습니다. "
-            f"당시 발행 시장은 {accel_text}({s1_a})를 보였으며, "
-            f"조달 성공률은 전분기 대비 {delta_text}({s1_d})하는 양상을 나타냈습니다. "
-            f"특히 단기물 쏠림 현상이 {short_term_text}({s2_d})되었던 시기이므로, 리스크 관리에 만전을 기할 필요가 있습니다."
-        )
-    except Exception as e:
-        explanation = f"현재 시장 상황은 {match['분기']}의 통계적 패턴과 유사성을 보이고 있습니다. 변동성 확대에 유의하시기 바랍니다."
-
-    return state, p_risk, explanation
+    return match['EWS_Result_Status'], float(match['p_risk']), explanation
 
 
 @app.route('/api/analysis_summary')
-@app.route('/api/analysis_summary')
+@login_required # 로그인 체크 추가
 def get_analysis_summary():
     try:
-        # [1] 기존 엔진들 호출 (변화 없음)
+        # [1] 데이터 수집
         df1 = process_cp_proxy_data()
         df2 = process_card2_data()
-        delta3 = process_card3_data()    # 현재 '잔액' 리스트 (조 단위)
+        balances = process_card3_data() # 조 단위 잔액 리스트
 
-        if df1 is None or df2 is None or not delta3:
-            return jsonify({"error": "Data failure"}), 500
+        if df1 is None or df2 is None or not balances:
+            return jsonify({"error": "Essential data missing"}), 500
 
+        # 최근 5분기 데이터 슬라이싱
         last_5_df1 = df1.tail(5)
         last_5_df2 = df2.tail(5)
 
         # ---------------------------------------------------------
-        # [수정 포인트] ML 진단용 '변화량' 계산
+        # [핵심 로직] AI 판단용 '변화량' 계산
         # ---------------------------------------------------------
         # 1. 1번 카드 성공률 (QoQ)
         current_m1 = last_5_df1['성공률_QoQ(%)'].iloc[-1]
 
         # 2. 3번 카드 변화량 계산 (최신 잔액 - 이전 분기 잔액)
-        # delta3가 잔액 리스트이므로, 마지막 두 값의 차이를 구해야 'S2_Delta'와 매칭됨
-        if len(delta3) >= 2:
-            current_m3_delta = delta3[-1] - delta3[-2]
-        else:
-            current_m3_delta = 0  # 데이터가 부족할 경우 안전장치
+        current_m3_delta = balances[-1] - balances[-2] if len(balances) >= 2 else 0
 
-        # ML 엔진 호출: 잔액이 아닌 '변화량(current_m3_delta)'을 넣어줌!
+        # ML 엔진 호출: 계산된 변화량(current_m3_delta) 전달
         state, p_risk, explanation = analyze_market_risk_ml(current_m1, current_m3_delta)
         # ---------------------------------------------------------
 
+        # [필드 네이밍 정합성] 프론트엔드와 이름 맞추기
         return jsonify({
             "labels": last_5_df1['분기'].tolist(),
-            "cp_issuance": last_5_df1['성공률_QoQ(%)'].fillna(0).tolist(),
+            "success_rate_qoq": last_5_df1['성공률_QoQ(%)'].fillna(0).tolist(), # 명확한 이름
 
-            "maturity": {
+            "short_term_debt": { # 구조화된 네이밍
                 "cp_3m": last_5_df2['cp_3m'].tolist() if 'cp_3m' in last_5_df2 else last_5_df2['cp_under_3m'].tolist(),
                 "st_bond": last_5_df2['st_bond'].tolist() if 'st_bond' in last_5_df2 else last_5_df2['st_bond_total'].tolist()
             },
 
-            # 화면에는 형이 원하는 '잔액' 리스트 그대로 전달
-            "non_bank_delta": delta3,
+            "non_bank_balance": balances, # 잔액임을 명시
 
             "final_status": {
                 "state": state,

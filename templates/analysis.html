@@ -81,51 +81,62 @@
         }
 
         async function init() {
-            try {
-                const res = await fetch('/api/analysis_summary');
-                const data = await res.json();
+    try {
+        const res = await fetch('/api/analysis_summary');
+        const data = await res.json();
 
-                const opt = {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: '#fff', font: { weight: 'bold' } } },
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
-                    }
-                };
-
-                // 1번 차트
-                new Chart(document.getElementById('cpChart'), {
-                    type: 'bar',
-                    data: { labels: data.labels, datasets: [{ data: data.cp_issuance, backgroundColor: '#3b82f6' }] },
-                    options: opt
-                });
-
-                // 2번 차트 (선 2개)
-                new Chart(document.getElementById('stChart'), {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [
-                            { label: 'CP 3개월미만', data: data.maturity.cp_3m, borderColor: '#eab308', tension: 0.3 },
-                            { label: '단기사채', data: data.maturity.st_bond, borderColor: '#34d399', tension: 0.3 }
-                        ]
-                    },
-                    options: { ...opt, plugins: { legend: { display: true, labels: { color: '#fff' } } } }
-                });
-
-                // 3번 차트
-                new Chart(document.getElementById('nonBankChart'), {
-                    type: 'line',
-                    data: { labels: data.labels, datasets: [{ data: data.non_bank_delta, borderColor: '#ea580c', fill: true }] },
-                    options: opt
-                });
-
-                document.getElementById('status-tag').innerText = data.final_status.state;
-                document.getElementById('risk-prob').innerText = (data.final_status.p_risk * 100).toFixed(1) + '%';
-                document.getElementById('explanation').innerText = data.final_status.explanation;
-            } catch (err) { console.error(err); }
+        if (data.error) {
+            alert("데이터를 불러오지 못했어: " + data.error);
+            return;
         }
+
+        // 공통 차트 옵션
+        const opt = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } },
+            plugins: { legend: { display: false } }
+        };
+
+        // 1번 차트 (성공률)
+        new Chart(document.getElementById('cpChart'), {
+            type: 'bar',
+            data: { labels: data.labels, datasets: [{ data: data.success_rate_qoq, backgroundColor: '#3b82f6' }] },
+            options: opt
+        });
+
+        // 2번 차트 (단기부채)
+        new Chart(document.getElementById('stChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: 'CP 3M', data: data.short_term_debt.cp_3m, borderColor: '#eab308', tension: 0.3 },
+                    { label: '단기사채', data: data.short_term_debt.st_bond, borderColor: '#34d399', tension: 0.3 }
+                ]
+            },
+            options: { ...opt, plugins: { legend: { display: true, labels: { color: '#fff' } } } }
+        });
+
+        // 3번 차트 (비은행 잔액 - 이름 확인!)
+        new Chart(document.getElementById('nonBankChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{ data: data.non_bank_balance, borderColor: '#ea580c', fill: true, tension: 0.3 }]
+            },
+            options: opt
+        });
+
+        // 4번 진단 결과 업데이트
+        document.getElementById('status-tag').innerText = data.final_status.state;
+        document.getElementById('risk-prob').innerText = (data.final_status.p_risk * 100).toFixed(1) + '%';
+        document.getElementById('explanation').innerHTML = data.final_status.explanation;
+
+    } catch (err) {
+        console.error("차트 로딩 중 에러 발생:", err);
+    }
+}
         window.onload = init;
     </script>
 </body>
