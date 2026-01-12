@@ -1,16 +1,20 @@
 import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session
-from models import db, User  # models.py에서 가져옴
-from crawler import get_multiple_keywords_news  # crawler.py에서 가져옴
+from models import db, User
+from crawler import get_multiple_keywords_news
 from finance_api import get_ecos_data, get_local_data, ECOS_INDICATORS
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
 import json
+from werkzeug.security import generate_password_hash, check_password_hash  # 비밀번호 암호화 추가
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "watchdog_secret"
-BASE_DIR = r"C:\Users\smw31\PycharmProjects\Market-WatchDog"
+
+app.secret_key = os.environ.get("WATCHDOG_SECRET", "dev_secret_key_1234")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 PREPROCESS_DIR = os.path.join(DATA_DIR, "전처리")
 
@@ -20,8 +24,7 @@ if not os.path.exists(PREPROCESS_DIR):
 
 # [1] 프로젝트 설정
 PROJECT_NAME = "Market WatchDog"
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'market_watchdog.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'market_watchdog.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # DB 초기화
@@ -29,6 +32,15 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            # 로그인 안 되어 있으면 로그인 페이지로 튕겨버림
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # [2] 페이지 라우팅
 @app.route('/')
