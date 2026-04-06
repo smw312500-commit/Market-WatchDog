@@ -1,259 +1,530 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ project_name }} - 통합 지표 분석</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* 커스텀 스크롤바 스타일 */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-    </style>
+<meta charset="UTF-8">
+<title>{{ project_name }} - Indicators</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fb;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-sub: #6b7280;
+    --cp:   #1d4ed8;
+    --abcp: #0d9488;
+    --ab:   #b45309;
+    --ev:   #dc2626;
+    --nav-bg: #111827;
+    --nav-txt: #f9fafb;
+    --nav-accent: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+         background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ── nav ── */
+  nav { background: var(--nav-bg); padding: 0 24px; height: 52px;
+        display: flex; align-items: center; gap: 28px; position: sticky; top: 0; z-index: 100; }
+  nav .logo { color: var(--nav-accent); font-weight: 700; font-size: 15px; letter-spacing: .5px; }
+  nav a { color: #9ca3af; text-decoration: none; font-size: 13px; }
+  nav a:hover, nav a.active { color: var(--nav-txt); }
+
+  /* ── layout ── */
+  .page { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ── 기간 선택 바 ── */
+  .range-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+               background: var(--card); border: 1px solid var(--border);
+               border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; }
+  .range-bar span { font-size: 12px; color: var(--text-sub); margin-right: 4px; }
+  .range-btn { padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border);
+               background: transparent; cursor: pointer; font-size: 12px; color: var(--text);
+               transition: all .15s; }
+  .range-btn:hover { border-color: var(--cp); color: var(--cp); }
+  .range-btn.active { background: var(--cp); color: #fff; border-color: var(--cp); }
+  .range-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .range-custom { display: flex; align-items: center; gap: 6px; }
+  .range-custom input { border: 1px solid var(--border); border-radius: 6px;
+                        padding: 4px 10px; font-size: 12px; width: 90px;
+                        outline: none; color: var(--text); background: var(--bg); }
+  .range-custom input:focus { border-color: var(--cp); }
+  .range-custom button { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--cp);
+                          background: var(--cp); color: #fff; cursor: pointer; font-size: 12px; }
+
+  /* ── 섹션 ── */
+  .section { margin-bottom: 36px; }
+  .section-header { display: flex; align-items: center; gap: 10px;
+                    margin-bottom: 16px; cursor: pointer; user-select: none; }
+  .section-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .section-dot.cp   { background: var(--cp); }
+  .section-dot.abcp { background: var(--abcp); }
+  .section-dot.ab   { background: var(--ab); }
+  .section-title { font-size: 16px; font-weight: 600; }
+  .section-toggle { margin-left: auto; font-size: 12px; color: var(--text-sub); }
+  .section-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 16px; }
+
+  /* ── 카드 ── */
+  .chart-card { background: var(--card); border: 1px solid var(--border);
+                border-radius: 10px; padding: 16px 20px; }
+  .chart-card h4 { font-size: 13px; font-weight: 500; color: var(--text-sub);
+                   margin-bottom: 12px; letter-spacing: .2px; }
+  .chart-wrap { position: relative; width: 100%; height: 220px; }
+
+  /* ── 범례 ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 4px;
+                 font-size: 11px; color: var(--text-sub); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── 로딩 ── */
+  .loading { display: flex; align-items: center; justify-content: center;
+             height: 220px; color: var(--text-sub); font-size: 13px; }
+</style>
 </head>
-<body class="bg-[#0f172a] text-slate-200 min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-7xl mx-auto">
-        <nav class="flex items-center justify-between mb-8 pb-4 border-b border-slate-700">
-            <a href="/" class="flex items-center space-x-2 group">
-                <span class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                    🚀 Market WatchDog
-                </span>
-            </a>
-            <div class="flex items-center space-x-8 text-sm font-bold">
-                <a href="/" class="text-slate-400 hover:text-white transition">홈(INDEX)</a>
-                <a href="/indicators" class="text-blue-400 border-b-2 border-blue-400 pb-1">지표 분석</a>
-                <a href="/analysis" class="text-slate-400 hover:text-white transition">AI 분석</a>
-                {% if session.username %}
-                    <div class="flex items-center space-x-3">
-                        <span class="text-slate-500 font-medium">{{ session.username }}형</span>
-                        <a href="/logout" class="text-rose-400 hover:text-rose-300 transition">로그아웃</a>
-                    </div>
-                {% else %}
-                    <a href="/login" class="text-slate-400 hover:text-white transition">로그인</a>
-                {% endif %}
-            </div>
-        </nav>
+<nav>
+  <span class="logo">[ {{ project_name }} ]</span>
+  <a href="/">HOME</a>
+  <a href="/login">SIGN UP</a>
+  <a href="/indicators" class="active">INDICATORS</a>
+  <a href="/analysis">ANALYSIS</a>
+</nav>
 
-        <header class="mb-8">
-            <h2 class="text-xl font-bold text-slate-100">📊 통합 지표 분석 센터</h2>
-            <p class="text-slate-400 mt-1">지표를 선택하고 시장의 복합 관계를 분석하세요.</p>
-        </header>
+<div class="page">
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-                <h3 class="text-blue-400 font-bold mb-4">1️⃣ 통계 바구니 선택</h3>
-                <div class="space-y-3" id="table-filter-group">
-                    </div>
-            </div>
-
-            <div class="lg:col-span-2 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-                <h3 class="text-cyan-400 font-bold mb-4">2️⃣ 세부 지표 담기 (중복 가능)</h3>
-                <div id="item-checkbox-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 h-40 overflow-y-auto pr-2 custom-scrollbar border border-slate-700 p-2 rounded-lg bg-slate-900">
-                    <p class="text-slate-500 italic text-sm">먼저 통계 바구니를 선택해 주세요.</p>
-                </div>
-            </div>
-
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
-                <div>
-                    <h3 class="text-emerald-400 font-bold mb-4">⚙️ 분석 옵션</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-xs text-slate-400 block mb-1">분석 주기</label>
-                            <select id="freq-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm outline-none focus:border-blue-500 text-slate-200">
-                                <option value="Q">분기별 (Q)</option>
-                                <option value="M">월별 (M)</option>
-                                <option value="A">연별 (A)</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-xs text-slate-400 block mb-1">시작일</label>
-                                <input type="date" id="start-date" value="2020-01-01" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 outline-none">
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400 block mb-1">종료일</label>
-                                <input type="date" id="end-date" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 outline-none">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button id="btn-draw" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
-                    📈 분석 실행
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl relative min-h-[550px]">
-            <div id="chart-loader" class="hidden absolute inset-0 bg-slate-800/80 flex items-center justify-center z-10 rounded-2xl">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            </div>
-            <canvas id="mainChart"></canvas>
-            <div id="empty-msg" class="absolute inset-0 flex items-center justify-center text-slate-500 italic">
-                지표를 선택하고 '분석 실행' 버튼을 눌러주세요.
-            </div>
-        </div>
+  <!-- 기간 선택 -->
+  <div class="range-bar">
+    <span>기간</span>
+    <button class="range-btn active" data-range="all">전체</button>
+    <button class="range-btn" data-range="24">24개월</button>
+    <button class="range-btn" data-range="12">12개월</button>
+    <button class="range-btn" data-range="6">6개월</button>
+    <button class="range-btn" data-range="3">3개월</button>
+    <div class="range-sep"></div>
+    <div class="range-custom">
+      <input type="text" id="custom-from" placeholder="201601">
+      <span style="color:var(--text-sub)">~</span>
+      <input type="text" id="custom-to" placeholder="202512">
+      <button onclick="applyCustomRange()">적용</button>
     </div>
+  </div>
 
-    <script>
-        let allIndicators = [];
-        let myChart = null;
+  <!-- CP 섹션 -->
+  <div class="section" id="sec-cp">
+    <div class="section-header" onclick="toggleSection('cp')">
+      <div class="section-dot cp"></div>
+      <span class="section-title">CP (기업어음)</span>
+      <span class="section-toggle" id="toggle-cp">▲ 접기</span>
+    </div>
+    <div class="section-body" id="body-cp">
+      <div class="chart-card">
+        <h4>잔액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="cp-balance"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>발행액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="cp-issue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>만기구조 비중</h4>
+        <div class="legend" id="leg-cp-tenor"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cp-tenor"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (4버킷)</h4>
+        <div class="legend" id="leg-cp-grade4"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cp-grade4"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (세부)</h4>
+        <div class="legend" id="leg-cp-gradedet"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cp-gradedet"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 잔액비중</h4>
+        <div class="legend" id="leg-cp-gradebal"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cp-gradebal"></canvas></div>
+      </div>
+    </div>
+  </div>
 
-        // 15가지 고대비 색상 팔레트
-        const chartColors = [
-            '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e',
-            '#0ea5e9', '#84cc16', '#d946ef', '#f97316', '#6366f1',
-            '#22d3ee', '#dc2626', '#0d9488', '#facc15', '#64748b'
-        ];
+  <!-- ABCP 섹션 -->
+  <div class="section" id="sec-abcp">
+    <div class="section-header" onclick="toggleSection('abcp')">
+      <div class="section-dot abcp"></div>
+      <span class="section-title">ABCP (자산유동화기업어음)</span>
+      <span class="section-toggle" id="toggle-abcp">▲ 접기</span>
+    </div>
+    <div class="section-body" id="body-abcp">
+      <div class="chart-card">
+        <h4>잔액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="abcp-balance"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>발행액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="abcp-issue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>만기구조 비중</h4>
+        <div class="legend" id="leg-abcp-tenor"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="abcp-tenor"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (4버킷)</h4>
+        <div class="legend" id="leg-abcp-grade4"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="abcp-grade4"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (세부)</h4>
+        <div class="legend" id="leg-abcp-gradedet"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="abcp-gradedet"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 잔액비중</h4>
+        <div class="legend" id="leg-abcp-gradebal"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="abcp-gradebal"></canvas></div>
+      </div>
+    </div>
+  </div>
 
-        // 초기화: 종료일 세팅
-        document.getElementById('end-date').value = new Date().toISOString().substring(0, 10);
+  <!-- AB 섹션 -->
+  <div class="section" id="sec-ab">
+    <div class="section-header" onclick="toggleSection('ab')">
+      <div class="section-dot ab"></div>
+      <span class="section-title">AB단기사채 (자산유동화단기사채)</span>
+      <span class="section-toggle" id="toggle-ab">▲ 접기</span>
+    </div>
+    <div class="section-body" id="body-ab">
+      <div class="chart-card">
+        <h4>잔액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="ab-balance"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>발행액 (조원)</h4>
+        <div class="chart-wrap"><canvas id="ab-issue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>만기구조 비중</h4>
+        <div class="legend" id="leg-ab-tenor"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ab-tenor"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (4버킷)</h4>
+        <div class="legend" id="leg-ab-grade4"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ab-grade4"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 발행비중 (세부)</h4>
+        <div class="legend" id="leg-ab-gradedet"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ab-gradedet"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>신용등급 잔액비중</h4>
+        <div class="legend" id="leg-ab-gradebal"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ab-gradebal"></canvas></div>
+      </div>
+    </div>
+  </div>
 
-        // [1] 지표 목록 로드
-        window.onload = async () => {
-            try {
-                const res = await fetch('/api/indicator_list');
-                allIndicators = await res.json();
-                const groups = [...new Set(allIndicators.map(ind => ind.group))];
-                const filterContainer = document.getElementById('table-filter-group');
+</div><!-- /page -->
 
-                groups.forEach((group) => {
-                    filterContainer.innerHTML += `
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded-lg transition text-slate-300">
-                            <input type="radio" name="table-group" value="${group}" class="w-4 h-4 text-blue-500 bg-slate-900 border-slate-600">
-                            <span class="text-sm font-medium">${group}</span>
-                        </label>`;
-                });
+<script>
+// ── 색상 팔레트 ──────────────────────────────────────────
+const C = {
+  cp: '#1d4ed8', abcp: '#0d9488', ab: '#b45309',
+  tenor: ['#6366f1','#3b82f6','#06b6d4','#10b981','#f59e0b','#ef4444'],
+  grade4: ['#1d4ed8','#3b82f6','#f59e0b','#ef4444'],
+  gradedet: ['#1e40af','#2563eb','#3b82f6','#60a5fa','#f97316','#fb923c','#fbbf24','#6b7280','#9ca3af','#d1d5db','#ef4444','#374151'],
+  gradebal: ['#1d4ed8','#3b82f6','#f59e0b','#ef4444'],
+  event: '#dc2626',
+};
 
-                document.getElementsByName('table-group').forEach(radio => {
-                    radio.onchange = (e) => updateItemCheckboxes(e.target.value);
-                });
-            } catch (err) {
-                console.error("지표 목록 로드 실패:", err);
-            }
-        };
+// ── 사건 마커 플러그인 ───────────────────────────────────
+const EVENTS = [
+  { yyyymm: 202003, label: '코로나' },
+  { yyyymm: 202210, label: '레고랜드' },
+  { yyyymm: 202307, label: '새마을금고' },
+  { yyyymm: 202312, label: '태영건설' },
+];
 
-        // [2] 바구니 선택 시 체크박스 업데이트
-        function updateItemCheckboxes(selectedGroup) {
-            const container = document.getElementById('item-checkbox-container');
-            container.innerHTML = "";
-            allIndicators.filter(ind => ind.group === selectedGroup).forEach(ind => {
-                container.innerHTML += `
-                    <label class="flex items-center space-x-2 p-2 bg-slate-800 rounded-md border border-slate-700 hover:border-blue-500 cursor-pointer transition">
-                        <input type="checkbox" value="${ind.id}" class="ind-checkbox w-4 h-4 rounded text-cyan-600 bg-slate-900 border-slate-600 focus:ring-cyan-500">
-                        <span class="text-xs text-slate-300 truncate">${ind.name}</span>
-                    </label>`;
-            });
-        }
+const eventPlugin = {
+  id: 'eventLines',
+  afterDraw(chart) {
+    const labels = chart.data.labels;
+    const ctx = chart.ctx;
+    EVENTS.forEach(ev => {
+      const idx = labels.findIndex(l => l === fmtLabel(ev.yyyymm));
+      if (idx < 0) return;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta.data[idx]) return;
+      const x = meta.data[idx].x;
+      const { top, bottom } = chart.chartArea;
+      ctx.save();
+      ctx.strokeStyle = C.event;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    });
+  }
+};
+Chart.register(eventPlugin);
 
-        // [3] 돈 단위 포맷팅
-        function formatMoney(value) {
-            if (value >= 1000) return (value / 1000).toFixed(1) + '조원';
-            return (value * 10).toLocaleString() + '억원';
-        }
+// ── 상태 ─────────────────────────────────────────────────
+let currentRange = { from: null, to: null };
+const charts = {};
 
-        // [4] 분석 실행 버튼 클릭
-        document.getElementById('btn-draw').onclick = async () => {
-            const checkedBoxes = document.querySelectorAll('.ind-checkbox:checked');
-            if (checkedBoxes.length === 0) return alert("분석할 지표를 골라줘 형!");
+// ── 유틸 ─────────────────────────────────────────────────
+function fmtLabel(yyyymm) {
+  const y = Math.floor(yyyymm / 100);
+  const m = yyyymm % 100;
+  return `${y}.${String(m).padStart(2,'0')}`;
+}
 
-            document.getElementById('chart-loader').classList.remove('hidden');
-            document.getElementById('empty-msg').classList.add('hidden');
+function buildQuery(base) {
+  const p = new URLSearchParams();
+  if (currentRange.from) p.set('from', currentRange.from);
+  if (currentRange.to)   p.set('to',   currentRange.to);
+  return base + (p.toString() ? '?' + p.toString() : '');
+}
 
-            const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
-            const freq = document.getElementById('freq-select').value;
-            const start = document.getElementById('start-date').value;
-            const end = document.getElementById('end-date').value;
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
 
-            try {
-                const dataPromises = selectedIds.map(id =>
-                    fetch(`/api/ecos_custom?id=${id}&freq=${freq}&start=${start}&end=${end}`).then(r => r.json())
-                );
-                const rawResults = await Promise.all(dataPromises);
-                document.getElementById('chart-loader').classList.add('hidden');
-                drawChart(rawResults);
-            } catch (err) {
-                alert("데이터를 가져오는데 실패했어!");
-                document.getElementById('chart-loader').classList.add('hidden');
-            }
-        };
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
 
-        // [5] 차트 그리기 (이중 Y축 & 15색)
-        function drawChart(results) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (myChart) myChart.destroy();
+function makeBaseOpts(labels, title) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 8 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: {
+        ticks: {
+          font: { size: 10 },
+          maxRotation: 0,
+          autoSkip: false,
+          callback(v, i) {
+            const l = labels[i] || '';
+            const n = labels.length;
+            // 1개월: 전체 다 표시
+            if (n <= 2) return l;
+            // 3개월: 매달 표시
+            if (n <= 4) return l;
+            // 6개월: 2달마다 표시
+            if (n <= 7) return i % 2 === 0 ? l : '';
+            // 12개월: 3달마다 표시
+            if (n <= 13) return i % 3 === 0 ? l : '';
+            // 전체(수년): 1월만 연도로 표시
+            return l.endsWith('.01') ? l.slice(0, 4) : '';
+          }
+        },
+        grid: { display: false }
+      },
+      y: { ticks: { font: { size: 10 } }, grid: { color: '#f3f4f6' } }
+    }
+  };
+}
 
-            // 모든 결과의 타임라인을 합쳐서 정렬 (라벨 중복 방지)
-            const allLabels = [...new Set(results.flatMap(r => r.data ? r.data.map(d => d.TIME) : []))].sort();
+function makeLegend(containerId, items) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = items.map(it =>
+    `<span class="legend-item">
+       <span class="legend-dot" style="background:${it.color}"></span>${it.label}
+     </span>`
+  ).join('');
+}
 
-            const datasets = results.map((res, idx) => {
-                const color = chartColors[idx % chartColors.length];
-                const dataArray = res.data || [];
-                const dataMap = new Map(dataArray.map(d => [d.TIME, d.DATA_VALUE]));
+// ── 선 차트 (잔액/발행액) ─────────────────────────────────
+function drawLine(id, rows, key, color, unit = '조원') {
+  destroyChart(id);
+  const labels = rows.map(r => fmtLabel(r.yyyymm));
+  const data   = rows.map(r => +(r[key] / 1e12).toFixed(2));
+  const ctx    = document.getElementById(id).getContext('2d');
+  const opts   = makeBaseOpts(labels);
+  opts.scales.y.ticks.callback = v => v + '조';
+  opts.plugins.tooltip.callbacks = {
+    label: c => `${c.dataset.label}: ${c.parsed.y.toFixed(1)}조원`
+  };
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: unit, data,
+        borderColor: color, backgroundColor: color + '18',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
+      }]
+    },
+    options: opts
+  });
+}
 
-                return {
-                    label: res.name || '알 수 없는 지표',
-                    data: allLabels.map(label => dataMap.get(label) || null),
-                    borderColor: color,
-                    backgroundColor: color + '20',
-                    yAxisID: res.unit_type === 'rate' ? 'y1' : 'y',
-                    tension: 0.3,
-                    spanGaps: true,
-                    borderWidth: 2,
-                    pointRadius: 2,
-                    pointHoverRadius: 5
-                };
-            });
+// ── 누적 영역 차트 (만기/신용도) ─────────────────────────
+function drawStacked(id, rows, keys, colors, labels_) {
+  destroyChart(id);
+  const labels = rows.map(r => fmtLabel(r.yyyymm));
+  const opts   = makeBaseOpts(labels);
+  opts.scales.y.stacked = true;
+  opts.scales.y.min = 0;
+  opts.scales.y.max = 1;
+  opts.scales.y.ticks.callback = v => (v * 100).toFixed(0) + '%';
+  opts.plugins.tooltip.callbacks = {
+    label: c => `${c.dataset.label}: ${(c.parsed.y * 100).toFixed(1)}%`
+  };
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: keys.map((k, i) => ({
+        label: labels_[i], data: rows.map(r => r[k] ?? 0),
+        borderColor: colors[i], backgroundColor: colors[i] + 'aa',
+        borderWidth: 1, pointRadius: 0, fill: true, tension: 0.2, stack: 'stk'
+      }))
+    },
+    options: opts
+  });
+}
 
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: allLabels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        x: {
-                            ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 },
-                            grid: { color: '#334155' }
-                        },
-                        y: {
-                            position: 'left',
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: function(value) { return formatMoney(value); }
-                            },
-                            grid: { color: '#334155' },
-                            title: { display: true, text: '자금 규모', color: '#94a3b8', font: { weight: 'bold' } }
-                        },
-                        y1: {
-                            position: 'right',
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: function(value) { return value + '%'; }
-                            },
-                            grid: { drawOnChartArea: false },
-                            title: { display: true, text: '금리 (%)', color: '#94a3b8', font: { weight: 'bold' } }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f8fafc', padding: 20, font: { size: 12 } },
-                            position: 'top'
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: '#3b82f6',
-                            bodyColor: '#f8fafc',
-                            borderColor: '#334155',
-                            borderWidth: 1
-                        }
-                    }
-                }
-            });
-        }
-    </script>
+// ── 범례 설정 ─────────────────────────────────────────────
+const TENOR_LABELS  = ['ultra(≤7일)', 'short(8~30)', 'mid(31~91)', 'main(92~183)', 'long(184~365)', 'xlong(366+)'];
+const TENOR_KEYS    = ['ultra','short','mid','main','long','xlong'];
+const GRADE4_LABELS = ['top(A1)', 'high(A2)', 'mid(A3)', 'low(B이하)'];
+const GRADE4_KEYS   = ['top','high','mid','low'];
+
+const CP_DET_KEYS   = ['a1','a2p','a2','a2m','a3p','a3','a3m','bp','b','bm','c','other'];
+const CP_DET_LABELS = ['A1','A2+','A2','A2-','A3+','A3','A3-','B+','B','B-','C','기타'];
+const ABCP_DET_KEYS  = ['a1','a2p','a2','a2m','a3p','a3','a3m','bp','c','d'];
+const ABCP_DET_LABELS= ['A1','A2+','A2','A2-','A3+','A3','A3-','B+','C','D'];
+const AB_DET_KEYS   = ['a1','a2p','a2','a2m','a3p','a3','a3m','bp','b','bm','c','d'];
+const AB_DET_LABELS = ['A1','A2+','A2','A2-','A3+','A3','A3-','B+','B','B-','C','D'];
+const GRADEBAL_LABELS = ['top(A1)', 'highmid(A2~A3)', 'low(B이하)', 'distress'];
+const GRADEBAL_KEYS   = ['top','highmid','low','dist'];
+
+// ── 전체 차트 렌더 ────────────────────────────────────────
+async function renderAll() {
+  // CP
+  const [cpBal, cpIss, cpTenor, cpGradeIss, cpGradeBal] = await Promise.all([
+    fetchJSON(buildQuery('/api/cp/balance')),
+    fetchJSON(buildQuery('/api/cp/issue')),
+    fetchJSON(buildQuery('/api/cp/tenor')),
+    fetchJSON(buildQuery('/api/cp/grade/iss')),
+    fetchJSON(buildQuery('/api/cp/grade/bal')),
+  ]);
+  drawLine('cp-balance', cpBal, 'balance_amt', C.cp);
+  drawLine('cp-issue',   cpIss, 'issue_amt',   C.cp);
+  drawStacked('cp-tenor',    cpTenor,    TENOR_KEYS,    C.tenor,    TENOR_LABELS);
+  drawStacked('cp-grade4',   cpGradeIss, GRADE4_KEYS,   C.grade4,   GRADE4_LABELS);
+  drawStacked('cp-gradedet', cpGradeIss, CP_DET_KEYS,   C.gradedet, CP_DET_LABELS);
+  drawStacked('cp-gradebal', cpGradeBal, GRADEBAL_KEYS, C.gradebal, GRADEBAL_LABELS);
+
+  makeLegend('leg-cp-tenor',    TENOR_LABELS.map((l,i)=>({label:l,color:C.tenor[i]})));
+  makeLegend('leg-cp-grade4',   GRADE4_LABELS.map((l,i)=>({label:l,color:C.grade4[i]})));
+  makeLegend('leg-cp-gradedet', CP_DET_LABELS.map((l,i)=>({label:l,color:C.gradedet[i]})));
+  makeLegend('leg-cp-gradebal', GRADEBAL_LABELS.map((l,i)=>({label:l,color:C.gradebal[i]})));
+
+  // ABCP
+  const [abcpBal, abcpIss, abcpTenor, abcpGradeIss, abcpGradeBal] = await Promise.all([
+    fetchJSON(buildQuery('/api/abcp/balance')),
+    fetchJSON(buildQuery('/api/abcp/issue')),
+    fetchJSON(buildQuery('/api/abcp/tenor')),
+    fetchJSON(buildQuery('/api/abcp/grade/iss')),
+    fetchJSON(buildQuery('/api/abcp/grade/bal')),
+  ]);
+  drawLine('abcp-balance', abcpBal, 'balance_amt', C.abcp);
+  drawLine('abcp-issue',   abcpIss, 'issue_amt',   C.abcp);
+  drawStacked('abcp-tenor',    abcpTenor,    TENOR_KEYS,     C.tenor,    TENOR_LABELS);
+  drawStacked('abcp-grade4',   abcpGradeIss, GRADE4_KEYS,    C.grade4,   GRADE4_LABELS);
+  drawStacked('abcp-gradedet', abcpGradeIss, ABCP_DET_KEYS,  C.gradedet, ABCP_DET_LABELS);
+  drawStacked('abcp-gradebal', abcpGradeBal, GRADEBAL_KEYS,  C.gradebal, GRADEBAL_LABELS);
+
+  makeLegend('leg-abcp-tenor',    TENOR_LABELS.map((l,i)=>({label:l,color:C.tenor[i]})));
+  makeLegend('leg-abcp-grade4',   GRADE4_LABELS.map((l,i)=>({label:l,color:C.grade4[i]})));
+  makeLegend('leg-abcp-gradedet', ABCP_DET_LABELS.map((l,i)=>({label:l,color:C.gradedet[i]})));
+  makeLegend('leg-abcp-gradebal', GRADEBAL_LABELS.map((l,i)=>({label:l,color:C.gradebal[i]})));
+
+  // AB
+  const [abBal, abIss, abTenor, abGradeIss, abGradeBal] = await Promise.all([
+    fetchJSON(buildQuery('/api/ab/balance')),
+    fetchJSON(buildQuery('/api/ab/issue')),
+    fetchJSON(buildQuery('/api/ab/tenor')),
+    fetchJSON(buildQuery('/api/ab/grade/iss')),
+    fetchJSON(buildQuery('/api/ab/grade/bal')),
+  ]);
+  drawLine('ab-balance', abBal, 'balance_amt', C.ab);
+  drawLine('ab-issue',   abIss, 'issue_amt',   C.ab);
+  drawStacked('ab-tenor',    abTenor,    TENOR_KEYS,    C.tenor,    TENOR_LABELS);
+  drawStacked('ab-grade4',   abGradeIss, GRADE4_KEYS,   C.grade4,   GRADE4_LABELS);
+  drawStacked('ab-gradedet', abGradeIss, AB_DET_KEYS,   C.gradedet, AB_DET_LABELS);
+  drawStacked('ab-gradebal', abGradeBal, GRADEBAL_KEYS, C.gradebal, GRADEBAL_LABELS);
+
+  makeLegend('leg-ab-tenor',    TENOR_LABELS.map((l,i)=>({label:l,color:C.tenor[i]})));
+  makeLegend('leg-ab-grade4',   GRADE4_LABELS.map((l,i)=>({label:l,color:C.grade4[i]})));
+  makeLegend('leg-ab-gradedet', AB_DET_LABELS.map((l,i)=>({label:l,color:C.gradedet[i]})));
+  makeLegend('leg-ab-gradebal', GRADEBAL_LABELS.map((l,i)=>({label:l,color:C.gradebal[i]})));
+}
+
+// ── 기간 버튼 ─────────────────────────────────────────────
+async function setRange(rangeKey) {
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-range="${rangeKey}"]`)?.classList.add('active');
+
+  if (rangeKey === 'all') {
+    currentRange = { from: null, to: null };
+  } else {
+    const latest = await fetchJSON('/api/latest');
+    const latestYM = latest.latest;
+    const months   = parseInt(rangeKey);
+    const ly = Math.floor(latestYM / 100);
+    const lm = latestYM % 100;
+    // 현재월 포함 n개월: n-1달 전부터
+    let fy = ly, fm = lm - (months - 1);
+    while (fm <= 0) { fm += 12; fy--; }
+    currentRange = {
+      from: String(fy * 100 + fm),
+      to:   String(latestYM)
+    };
+  }
+  renderAll();
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('custom-from').value.trim();
+  const to   = document.getElementById('custom-to').value.trim();
+  if (!from && !to) return;
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+  currentRange = { from: from || null, to: to || null };
+  renderAll();
+}
+
+document.querySelectorAll('.range-btn').forEach(btn => {
+  btn.addEventListener('click', () => setRange(btn.dataset.range));
+});
+
+// ── 섹션 접기/펼치기 ──────────────────────────────────────
+function toggleSection(key) {
+  const body   = document.getElementById(`body-${key}`);
+  const toggle = document.getElementById(`toggle-${key}`);
+  const hidden = body.style.display === 'none';
+  body.style.display   = hidden ? 'grid' : 'none';
+  toggle.textContent   = hidden ? '▲ 접기' : '▼ 펼치기';
+}
+
+// ── 초기 로드 ─────────────────────────────────────────────
+renderAll();
+</script>
 </body>
 </html>

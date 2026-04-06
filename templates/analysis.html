@@ -1,146 +1,742 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ project_name }} - AI Risk Analysis</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .step-card { transition: all 0.5s ease; position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; pointer-events: none; transform: scale(0.95); z-index: 0; }
-        .step-card.active { opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10; }
-        canvas { padding-bottom: 25px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ project_name }} - MSI 분석</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #f8f9fb;
+  --panel:   #ffffff;
+  --border:  #e5e7eb;
+  --border2: #d1d5db;
+  --text:    #374151;
+  --muted:   #9ca3af;
+  --bright:  #111827;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --darkred: #991b1b;
+  --blue:    #3b82f6;
+  --mono:    'Courier New', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;min-height:100vh;font-size:13px;}
+
+nav{background:#1a1a1a;padding:14px 20px;display:flex;align-items:center;gap:24px;border-bottom:1px solid var(--border);}
+nav .logo{color:#22c55e;font-weight:700;font-size:14px;font-family:var(--mono);}
+nav a{color:#888;text-decoration:none;font-size:13px;}
+nav a:hover,nav a.active{color:#ddd;}
+
+.page{max-width:1440px;margin:0 auto;padding:20px 20px 60px;}
+
+/* ── 헤더 ── */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.page-header h2{font-size:17px;color:var(--bright);font-weight:500;}
+.page-header h2 span{color:var(--blue);}
+.page-header p{font-size:11px;color:var(--muted);margin-top:3px;}
+.data-badge{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border2);padding:4px 10px;border-radius:3px;}
+
+/* ── 상단 4개 카드 ── */
+.top-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.card.c-normal::before{background:var(--green);}
+.card.c-watch::before{background:var(--amber);}
+.card.c-warning::before{background:var(--red);}
+.card.c-danger::before{background:var(--darkred);}
+.card.c-comment::before{background:var(--blue);}
+.card-label{font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;}
+.card-val{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;color:var(--bright);}
+.card-status{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:5px;}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.card-sub{font-size:11px;color:var(--muted);margin-top:5px;}
+.card-comment{font-size:12px;line-height:1.7;color:var(--text);}
+.card-comment strong{color:var(--bright);}
+
+/* ── 메인 그리드 ── */
+.main-grid{display:grid;grid-template-columns:300px 1fr;gap:14px;margin-bottom:14px;}
+
+/* ── 패널 공통 ── */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;}
+.panel-title{font-size:10px;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
+
+/* ── 게이지 ── */
+.gauge-wrap{position:relative;width:200px;height:105px;margin:0 auto;}
+#gaugeCanvas{width:200px;height:105px;}
+.gauge-val{position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center;}
+.gauge-num{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1;}
+.gauge-lbl{font-size:11px;margin-top:3px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.gauge-ticks{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center;font-size:9px;color:var(--muted);}
+.gtick{display:flex;align-items:center;gap:3px;}
+.gdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+/* ── 신호 분해 ── */
+.sig-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.sig-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.sig-name{font-size:10px;color:var(--muted);width:68px;flex-shrink:0;text-align:right;}
+.sig-bar-bg{flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;}
+.sig-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.sig-val{font-family:var(--mono);font-size:10px;width:40px;text-align:right;flex-shrink:0;}
+
+/* ── 차트 ── */
+.chart-wrap{height:260px;position:relative;}
+
+/* ── 사건 섹션 ── */
+.event-section{margin-bottom:14px;}
+.event-section .section-title{font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.event-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.ev-panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;}
+.ev-header{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ev-name{font-size:13px;font-weight:500;color:var(--bright);}
+.ev-meta{font-size:10px;color:var(--muted);}
+.ev-score{font-family:var(--mono);font-size:22px;font-weight:700;margin:6px 0 2px;}
+.ev-type{font-size:10px;color:var(--muted);}
+.ev-chart-wrap{height:120px;position:relative;margin-top:10px;}
+
+/* ── 테이블 ── */
+.tbl-section{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;}
+.tbl-wrap{overflow-x:auto;margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{font-size:9px;color:var(--muted);padding:7px 10px;text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap;letter-spacing:.3px;}
+td{padding:6px 10px;text-align:center;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(255,255,255,0.03);}
+tr:hover td{background:rgba(59,130,246,0.04);}
+.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:600;}
+      #btn-balance.active{background:#10b981;color:#000;}
+      #btn-credit.active{background:#f59e0b;color:#000;}
+      #btn-tenor.active{background:#a78bfa;color:#000;}
+</style>
 </head>
-<body class="bg-[#0b0f1a] text-slate-200 p-8">
-    <div class="max-w-[1400px] mx-auto">
-        <header class="mb-12 border-b border-slate-800 pb-6 flex justify-between items-center">
-            <h1 class="text-3xl font-black italic text-red-500 uppercase tracking-tighter cursor-pointer" onclick="location.href='/'">
-                AI Market WatchDog
-            </h1>
+<body>
 
-            <div class="flex items-center gap-6">
-                <nav class="flex gap-6 mr-6 border-r border-slate-800 pr-6">
-                    <a href="/" class="text-xs font-bold text-slate-400 hover:text-white transition-colors tracking-widest">홈(뉴스)</a>
-                    <a href="#" class="text-xs font-bold text-slate-400 hover:text-white transition-colors tracking-widest">지표</a>
-                </nav>
-                <div class="flex gap-4">
-                    <button class="text-xs font-bold text-slate-300 hover:text-white transition-colors">LOGIN</button>
-                    <button class="text-xs font-bold bg-red-600 px-4 py-2 rounded-lg text-white hover:bg-red-500 transition-all shadow-lg shadow-red-600/20">
-                        SIGN UP
-                    </button>
-                </div>
-            </div>
-        </header>
+<nav>
+  <span class="logo">[ {{ project_name }} ]</span>
+  <a href="/">HOME</a>
+  <a href="/indicators">INDICATORS</a>
+  <a href="/analysis" class="active">ANALYSIS</a>
+</nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div class="lg:col-span-2 relative">
-                <div id="card-container" class="relative h-[580px]">
-                    <div id="step-0" class="step-card active bg-[#161b22] p-8 rounded-3xl border border-slate-800 shadow-2xl">
-                        <div class="text-xs font-bold text-blue-500 mb-4 uppercase tracking-widest">Step 01. Funding Entrance</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">CP 발행 성공률 증감 (QoQ)</h3>
-                        <div class="h-80"><canvas id="cpChart"></canvas></div>
-                    </div>
+<div class="page">
 
-                    <div id="step-1" class="step-card bg-[#161b22] p-8 rounded-3xl border border-slate-800 border-t-4 border-t-yellow-500 shadow-2xl">
-                        <div class="text-xs font-bold text-yellow-500 mb-4 uppercase tracking-widest">Step 02. Market Bottleneck</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">단기자금 발행 추이 (CP 3개월미만 & 단기사채)<span class="text-sm text-slate-400 ml-2">단위 : (조원)</span></h3>
-                        <div class="h-80"><canvas id="stChart"></canvas></div>
-                    </div>
-
-                    <div id="step-2" class="step-card bg-[#161b22] p-8 rounded-3xl border border-slate-800 border-t-4 border-t-orange-600 shadow-2xl">
-                        <div class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Step 03. Risk Spillover</div>
-                        <h3 class="text-2xl font-bold mb-6 text-white">비은행여신잔액<span class="text-sm text-slate-400 ml-2">단위 : (조원)</span></h3>
-                        <div class="h-80"><canvas id="nonBankChart"></canvas></div>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 mt-8">
-                    <button onclick="changeCard(-1)" class="bg-slate-800 p-4 rounded-xl flex-1 font-bold border border-slate-700 hover:bg-slate-700">← PREV</button>
-                    <button onclick="changeCard(1)" class="bg-blue-600 p-4 rounded-xl flex-1 font-bold hover:bg-blue-500 text-white">NEXT →</button>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-br from-red-900/40 to-slate-900 p-8 rounded-3xl border border-red-500/30 h-[670px] flex flex-col justify-between">
-                <div class="text-center">
-                    <div class="text-xs font-bold text-red-400 mb-4 uppercase tracking-widest">AI Diagnosis</div>
-                    <div id="status-tag" class="text-4xl font-black mb-6 drop-shadow-2xl">---</div>
-                    <div class="text-slate-400 font-bold">위험 확률: <span id="risk-prob" class="text-white text-xl">--%</span></div>
-                </div>
-                <div class="bg-black/40 p-6 rounded-2xl border border-white/5 italic text-blue-200 text-sm" id="explanation">분석 중...</div>
-            </div>
-        </div>
+  <div class="page-header">
+    <div>
+      <h2>시장 스트레스 지수 — <span>MSI v56.2</span></h2>
+      <p>한국 단기금융시장 | CP · ABCP · AB단기사채 | 잔액비중 · 만기구조 · 신용도 복합 모델</p>
     </div>
+    <div class="data-badge" id="dataBadge">DATA: —</div>
+  </div>
 
-    <script>
-        let currentIdx = 0;
-        function changeCard(dir) {
-            const cards = document.querySelectorAll('.step-card');
-            cards[currentIdx].classList.remove('active');
-            currentIdx = (currentIdx + dir + cards.length) % cards.length;
-            cards[currentIdx].classList.add('active');
-        }
+  <!-- 상단 4개 카드 -->
+  <div class="top-cards">
+    <div class="card" id="cardMsi">
+      <div class="card-label">MSI v56.2 종합</div>
+      <div class="card-val" id="cvMsi">—</div>
+      <div class="card-status"><span class="status-dot" id="cdMsiDot"></span><span id="cdMsiSt">—</span></div>
+    </div>
+    <div class="card" id="cardPre">
+      <div class="card-label">선행신호 (Precursor)</div>
+      <div class="card-val" id="cvPre">—</div>
+      <div class="card-status"><span class="status-dot" id="cdPreDot"></span><span id="cdPreSt">—</span></div>
+      <div class="card-sub" id="cvPreSub">—</div>
+    </div>
+    <div class="card" id="cardTr">
+      <div class="card-label">추세신호 (Trend)</div>
+      <div class="card-val" id="cvTr">—</div>
+      <div class="card-status"><span class="status-dot" id="cdTrDot"></span><span id="cdTrSt">—</span></div>
+    </div>
+    <div class="card c-comment">
+      <div class="card-label">현황 코멘트</div>
+      <div class="card-comment" id="cvComment">—</div>
+    </div>
+  </div>
 
+  <!-- 게이지 + 차트 -->
+  <div class="main-grid">
+    <div class="panel">
+      <div class="panel-title">현재 상태</div>
+      <div class="gauge-wrap">
+        <canvas id="gaugeCanvas"></canvas>
+        <div class="gauge-val">
+          <div class="gauge-num" id="gNum">—</div>
+          <div class="gauge-lbl"><span class="status-dot" id="gDot"></span><span id="gLbl">—</span></div>
+        </div>
+      </div>
+      <div class="gauge-ticks">
+        <span class="gtick"><span class="gdot" style="background:var(--green)"></span>정상 &lt;0.50</span>
+        <span class="gtick"><span class="gdot" style="background:var(--amber)"></span>주의 0.50</span>
+        <span class="gtick"><span class="gdot" style="background:var(--red)"></span>경고 0.75</span>
+        <span class="gtick"><span class="gdot" style="background:var(--darkred)"></span>위험 1.00</span>
+      </div>
+      <div class="sig-section">
+        <div class="sig-row">
+          <div class="sig-name">잔액 이탈</div>
+          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-balance"></div></div>
+          <div class="sig-val" id="sv-balance">—</div>
+        </div>
+        <div class="sig-row">
+          <div class="sig-name">신용도 이탈</div>
+          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-credit"></div></div>
+          <div class="sig-val" id="sv-credit">—</div>
+        </div>
+        <div class="sig-row">
+          <div class="sig-name">만기구조</div>
+          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-tenor"></div></div>
+          <div class="sig-val" id="sv-tenor">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:10px;color:var(--muted);">MSI 시계열 (최근 9개월)</span>
+          <div style="display:flex;gap:10px;font-size:10px;color:#3a5068;" id="mainLegend">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#3b82f6;display:inline-block;"></span>MSI v56.2</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="toggleGroup('balance',this)" style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #10b981;background:transparent;color:#10b981;cursor:pointer;transition:all .15s;" id="btn-balance">잔액</button>
+          <button onclick="toggleGroup('credit',this)"  style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;cursor:pointer;transition:all .15s;" id="btn-credit">신용도</button>
+          <button onclick="toggleGroup('tenor',this)"   style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #a78bfa;background:transparent;color:#a78bfa;cursor:pointer;transition:all .15s;" id="btn-tenor">만기</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5068;margin-bottom:4px;padding:0 2px;">
+        <span style="color:#3b82f6;">← MSI 점수</span>
+        <span>신호 강도 →</span>
+      </div>
+      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 사건별 구간 차트 -->
+  <div class="event-section">
+    <div class="section-title">주요 사건 및 암수 사건 — MSI 구간 (T-8 ~ T+4)</div>
+    <div class="event-grid" id="eventGrid"></div>
+  </div>
+
+  <!-- 최근 24개월 테이블 -->
+  <div class="tbl-section">
+    <div class="panel-title">최근 24개월 MSI 지표</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>연월</th>
+            <th>MSI 종합</th>
+            <th>상태</th>
+            <th>Precursor</th>
+            <th>Trend</th>
+            <th>잔액신호</th>
+            <th>신용신호</th>
+            <th>만기신호</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 데이터 (Flask에서 주입 or API)
+// ============================================================
+const SC = {
+  '정상':  {color:'#10b981', bg:'rgba(16,185,129,0.12)'},
+  '주의':  {color:'#f59e0b', bg:'rgba(245,158,11,0.12)'},
+  '경고':  {color:'#ef4444', bg:'rgba(239,68,68,0.12)'},
+  '위험':  {color:'#991b1b', bg:'rgba(153,27,27,0.25)'},
+  '초위험':{color:'#7f1d1d', bg:'rgba(127,29,29,0.35)'},
+  '-':     {color:'#9ca3af', bg:'rgba(58,80,104,0.12)'},
+};
+
+function statusColor(s){ return (SC[s]||SC['-']).color; }
+function statusBg(s)   { return (SC[s]||SC['-']).bg; }
+
+let mainChartData = [];
+const activeGroups = new Set();
+
+const GROUP_META = {
+  balance: {label:'잔액신호',   color:'#10b981'},
+  credit:  {label:'신용도신호', color:'#f59e0b'},
+  tenor:   {label:'만기신호',   color:'#a78bfa'},
+};
+
+function updateLegend() {
+  const leg = document.getElementById('mainLegend');
+  if (!leg) return;
+  let html = '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#3b82f6;display:inline-block;"></span>MSI v56.2</span>';
+  activeGroups.forEach(k => {
+    const m = GROUP_META[k];
+    html += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:${m.color};display:inline-block;"></span>${m.label}</span>`;
+  });
+  leg.innerHTML = html;
+}
+
+function toggleGroup(key, btn) {
+  if (activeGroups.has(key)) {
+    activeGroups.delete(key);
+    btn.classList.remove('active');
+  } else {
+    activeGroups.add(key);
+    btn.classList.add('active');
+  }
+  updateLegend();
+  drawMainChart(mainChartData);
+}
+
+const EVENTS_META = {
+  '코로나':     {yyyymm:202003, type:'발행자 과잉공급', color:'#94a3b8'},
+  '레고랜드':   {yyyymm:202210, type:'매수자 이탈',    color:'#ef4444'},
+  '새마을금고': {yyyymm:202307, type:'매수자 이탈',    color:'#f97316'},
+  '태영건설':   {yyyymm:202312, type:'매수자 이탈',    color:'#f59e0b'},
+};
+
+// ============================================================
+// 초기화 - API에서 데이터 로드
+// ============================================================
 async function init() {
-        try {
-            const res = await fetch('/api/analysis_summary');
-            const data = await res.json();
-            if (data.error) return;
+  const res  = await fetch('/api/msi/latest');
+  const data = await res.json();
+  renderCards(data.latest);
+  drawGauge(data.latest.msi, data.latest.status);
+  drawMainChart(data.chart_all);
+  renderEventCharts(data.events);
+  renderTable(data.recent24);
+}
 
-            const opt = {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        grid: { color: '#1e293b' },
-                        ticks: { color: '#94a3b8' },
-                        title: { display: true, text: '증감률(%)', color: '#94a3b8' } // 단위 표시
-                    },
-                    x: { ticks: { color: '#94a3b8' } }
-                },
-                plugins: { legend: { display: false } }
-            };
+// ============================================================
+// 카드
+// ============================================================
+function renderCards(d) {
+  document.getElementById('dataBadge').textContent = 'DATA: ' + String(d.yyyymm).replace(/(\d{4})(\d{2})/, '$1.$2');
 
-            // 1번 그래프: 성공률 QoQ (%) - 이제 막대가 플러스/마이너스로 나옴
-            new Chart(document.getElementById('cpChart'), {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: '성공률 QoQ(%)',
-                        data: data.success_rate_qoq, // 수정됨!
-                        backgroundColor: (context) => {
-                            const val = context.raw;
-                            return val >= 0 ? '#3b82f6' : '#ef4444'; // 양수면 파랑, 음수면 빨강
-                        },
-                        borderRadius: 4
-                    }]
-                },
-                options: opt
-            });
+  // MSI 카드
+  const msiEl = document.getElementById('cardMsi');
+  msiEl.className = 'card ' + cardCls(d.status);
+  document.getElementById('cvMsi').textContent = d.msi.toFixed(3);
+  document.getElementById('cvMsi').style.color = statusColor(d.status);
+  document.getElementById('cdMsiDot').style.background = statusColor(d.status);
+  document.getElementById('cdMsiSt').textContent = d.status;
 
-            // 2번 그래프
-            new Chart(document.getElementById('stChart'), {
-                type: 'line',
-                data: { labels: data.labels, datasets: [
-                    { label: 'CP 3개월 미만', data: data.short_term_debt.cp_3m, borderColor: '#eab308' },
-                    { label: '단기사채', data: data.short_term_debt.st_bond, borderColor: '#34d399' }
-                ]},
-                options: { ...opt, plugins: { legend: { display: true, labels: { color: '#fff' } } } }
-            });
+  // Precursor 카드
+  const preEl = document.getElementById('cardPre');
+  preEl.className = 'card ' + cardCls(d.pre_status);
+  document.getElementById('cvPre').textContent = d.precursor.toFixed(3);
+  document.getElementById('cvPre').style.color = statusColor(d.pre_status);
+  document.getElementById('cdPreDot').style.background = statusColor(d.pre_status);
+  document.getElementById('cdPreSt').textContent = d.pre_status;
+  document.getElementById('cvPreSub').textContent =
+    `잔액 ${d.balance.toFixed(3)} | 신용 ${d.credit.toFixed(3)}`;
 
-            // 3번 그래프
-            new Chart(document.getElementById('nonBankChart'), {
-                type: 'line',
-                data: { labels: data.labels, datasets: [{ data: data.non_bank_balance, borderColor: '#ea580c', fill: true }] },
-                options: opt
-            });
+  // Trend 카드
+  const trEl = document.getElementById('cardTr');
+  trEl.className = 'card ' + cardCls(d.tr_status);
+  document.getElementById('cvTr').textContent = d.trend.toFixed(3);
+  document.getElementById('cvTr').style.color = statusColor(d.tr_status);
+  document.getElementById('cdTrDot').style.background = statusColor(d.tr_status);
+  document.getElementById('cdTrSt').textContent = d.tr_status;
 
-            // 4번 결과
-            document.getElementById('status-tag').innerText = data.final_status.state;
-            document.getElementById('risk-prob').innerText = (data.final_status.p_risk * 100).toFixed(1) + '%';
-            document.getElementById('explanation').innerHTML = data.final_status.explanation;
-        } catch (err) { console.error(err); }
+  // 코멘트 카드
+  document.getElementById('cvComment').innerHTML = buildComment(d);
+
+  // 신호 분해 바
+  renderSigBar('balance', d.balance);
+  renderSigBar('credit',  d.credit);
+  renderSigBar('tenor',   d.tenor);
+}
+
+function cardCls(s) {
+  return {'정상':'c-normal','주의':'c-watch','경고':'c-warning','위험':'c-danger','초위험':'c-danger'}[s] || '';
+}
+
+function renderSigBar(key, val) {
+  const pct = Math.min(val * 100, 100).toFixed(1);
+  const col = val > 0.75 ? '#ef4444' : val > 0.5 ? '#f59e0b' : '#3b82f6';
+  document.getElementById(`sb-${key}`).style.cssText = `width:${pct}%;background:${col}`;
+  document.getElementById(`sv-${key}`).textContent   = val.toFixed(3);
+  document.getElementById(`sv-${key}`).style.color   = col;
+}
+
+function buildComment(d) {
+  const strongest = ['잔액 이탈', '신용도 이탈', '만기구조']
+    .map((l,i) => ({l, v:[d.balance,d.credit,d.tenor][i]}))
+    .sort((a,b)=>b.v-a.v)[0];
+  return `현재 MSI <strong>${d.msi.toFixed(3)}</strong> — <strong>${d.status}</strong> 구간.
+    가장 강한 신호는 <strong>${strongest.l}</strong>(${strongest.v.toFixed(3)}).
+    선행신호 ${d.pre_status}, 추세신호 ${d.tr_status} 상태.`;
+}
+
+// ============================================================
+// 게이지
+// ============================================================
+function drawGauge(msi, status) {
+  const canvas = document.getElementById('gaugeCanvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width = 200; canvas.height = 105;
+  const cx = 100, cy = 100, r = 80, lw = 14;
+
+  const thresholds = [
+    {from:0,   to:0.50, color:'#10b981'},
+    {from:0.50,to:0.75, color:'#f59e0b'},
+    {from:0.75,to:1.00, color:'#ef4444'},
+    {from:1.00,to:2.50, color:'#7f1d1d'},
+  ];
+  const maxV = 2.5;
+  const toAngle = v => Math.PI + (Math.PI * Math.min(v, maxV) / maxV);
+
+  ctx.clearRect(0,0,200,105);
+  ctx.lineCap = 'round';
+
+  // 배경 호
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 2*Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = lw;
+  ctx.stroke();
+
+  // 색상 구간
+  thresholds.forEach(t => {
+    const sa = toAngle(t.from), ea = toAngle(t.to);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, sa, ea);
+    ctx.strokeStyle = t.color;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+  });
+
+  // 마스크 (값까지만 보이게)
+  const filled = toAngle(Math.min(msi, maxV));
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, filled, 2*Math.PI);
+  ctx.strokeStyle = 'rgba(7,9,14,0.92)';
+  ctx.lineWidth = lw + 2;
+  ctx.stroke();
+
+
+
+  const col = statusColor(status);
+  document.getElementById('gNum').textContent = msi.toFixed(3);
+  document.getElementById('gNum').style.color = col;
+  document.getElementById('gDot').style.background = col;
+  document.getElementById('gLbl').textContent = status;
+  document.getElementById('gLbl').style.color = col;
+}
+
+// ============================================================
+// 메인 차트
+// ============================================================
+let mainChartInst = null;
+function drawMainChart(data) {
+  if (data && data.length) mainChartData = data;
+  const d = mainChartData;
+  if (!d || !d.length) return;
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChartInst) mainChartInst.destroy();
+
+  const eventYYYYMM  = [202003, 202210, 202307, 202312];
+  const hiddenYYYYMM = [201805, 201810, 202010];
+
+  // 기본 9개월로 필터
+  const latest = d[d.length - 1].YYYYMM;
+  const ly = Math.floor(latest / 100), lm = latest % 100;
+  let fy = ly, fm = lm - 8; if(fm <= 0){fm+=12; fy--;}
+  const fromYM = fy * 100 + fm;
+  const visData = d.filter(r => r.YYYYMM >= fromYM);
+
+  const labels = visData.map(d => {
+    const ym = String(d.YYYYMM);
+    return ym.slice(0,4) + '.' + ym.slice(4);
+  });
+
+  const evPlugin = {
+    id: 'evLines',
+    afterDraw(chart) {
+      const {ctx:c, chartArea:{top,bottom}, scales:{x}} = chart;
+      eventYYYYMM.forEach(eym => {
+        const idx = visData.findIndex(d => d.YYYYMM === eym);
+        if (idx < 0) return;
+        const px = x.getPixelForValue(idx);
+        c.save();
+        c.strokeStyle = 'rgba(239,68,68,0.45)';
+        c.lineWidth = 1.2;
+        c.setLineDash([3,3]);
+        c.beginPath(); c.moveTo(px,top); c.lineTo(px,bottom); c.stroke();
+        c.setLineDash([]);
+        c.restore();
+      });
+      hiddenYYYYMM.forEach(eym => {
+        const idx = visData.findIndex(d => d.YYYYMM === eym);
+        if (idx < 0) return;
+        const px = x.getPixelForValue(idx);
+        c.save();
+        c.strokeStyle = 'rgba(148,163,184,0.35)';
+        c.lineWidth = 1;
+        c.setLineDash([2,4]);
+        c.beginPath(); c.moveTo(px,top); c.lineTo(px,bottom); c.stroke();
+        c.setLineDash([]);
+        c.restore();
+      });
     }
-        window.onload = init;
-    </script>
+  };
+
+  const threshPlugin = {
+    id: 'thresh',
+    beforeDraw(chart) {
+      const {ctx:c, chartArea:{left,right}, scales:{y}} = chart;
+      [{v:0.50,col:'rgba(245,158,11,0.25)'},{v:0.75,col:'rgba(239,68,68,0.25)'},{v:1.00,col:'rgba(153,27,27,0.3)'}]
+      .forEach(({v,col}) => {
+        const py = y.getPixelForValue(v);
+        c.save(); c.strokeStyle=col; c.lineWidth=1; c.setLineDash([4,4]);
+        c.beginPath(); c.moveTo(left,py); c.lineTo(right,py); c.stroke();
+        c.setLineDash([]); c.restore();
+      });
+    }
+  };
+
+  mainChartInst = new Chart(ctx, {
+    type: 'line',
+    plugins: [threshPlugin, evPlugin],
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'MSI v56.2',
+          data: visData.map(r => r.MSI_total_v562),
+          borderColor: '#3b82f6', borderWidth: 2,
+          pointRadius: 0, fill: true,
+          backgroundColor: 'rgba(59,130,246,0.06)',
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        ...(activeGroups.has('balance') ? [{
+          label: '잔액신호',
+          data: visData.map(r => r.balance_core || 0),
+          borderColor: '#10b981', borderWidth: 1.5,
+          pointRadius: 0, fill: false, tension: 0.3,
+          borderDash: [4,2], yAxisID: 'y2',
+        }] : []),
+        ...(activeGroups.has('credit') ? [{
+          label: '신용도신호',
+          data: visData.map(r => r.credit_core || 0),
+          borderColor: '#f59e0b', borderWidth: 1.5,
+          pointRadius: 0, fill: false, tension: 0.3,
+          borderDash: [4,2], yAxisID: 'y2',
+        }] : []),
+        ...(activeGroups.has('tenor') ? [{
+          label: '만기신호',
+          data: visData.map(r => r.tenor_core || 0),
+          borderColor: '#a78bfa', borderWidth: 1.5,
+          pointRadius: 0, fill: false, tension: 0.3,
+          borderDash: [4,2], yAxisID: 'y2',
+        }] : []),
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: 1,
+          titleColor: '#111827', bodyColor: '#9ca3af',
+          callbacks: {
+            title: items => labels[items[0].dataIndex],
+            label: item => ` ${item.dataset.label}: ${item.parsed.y.toFixed(3)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {color:'rgba(0,0,0,0.04)'},
+          ticks: {
+            color:'#9ca3af', font:{size:9},
+            maxTicksLimit: 16,
+            callback(v,i) {
+              const l = labels[i]||'';
+              return l.endsWith('.01') ? l.slice(0,4) : '';
+            }
+          }
+        },
+        y: {
+          min: 0, max: 2.2,
+          grid: {color:'rgba(0,0,0,0.06)'},
+          ticks: {color:'#3b82f6', font:{size:9}, callback:v=>v.toFixed(1)},
+          position: 'left',
+        },
+        y2: {
+          min: 0, max: 1.2,
+          grid: {display:false},
+          ticks: {color:'#9ca3af', font:{size:9}, callback:v=>v.toFixed(1)},
+          position: 'right',
+          display: activeGroups.size > 0,
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// 사건별 구간 차트
+// ============================================================
+const evCharts = {};
+function renderEventCharts(events) {
+  const grid = document.getElementById('eventGrid');
+  grid.innerHTML = '';
+
+  // 연월 순 정렬
+  const sorted = Object.entries(events).sort((a,b) => a[1].yyyymm - b[1].yyyymm);
+  sorted.forEach(([name, ev]) => {
+    const ym = String(ev.yyyymm);
+    const dateStr = ym.slice(0,4) + '.' + ym.slice(4);
+    const sc = SC[ev.status] || SC['-'];
+
+    const div = document.createElement('div');
+    div.className = 'ev-panel';
+    div.innerHTML = `
+      <div class="ev-header">
+        <div class="ev-dot" style="background:${ev.color}"></div>
+        <div>
+          <div class="ev-name">${name}</div>
+          <div class="ev-meta">${dateStr} | ${ev.type}</div>
+        </div>
+      </div>
+      <div class="ev-score" style="color:${sc.color}">${ev.peak.toFixed(3)}</div>
+      <div class="ev-type">
+        <span class="badge" style="background:${sc.bg};color:${sc.color}">${ev.status}</span>
+      </div>
+      <div class="ev-chart-wrap"><canvas id="evc-${name}"></canvas></div>
+    `;
+    grid.appendChild(div);
+
+    requestAnimationFrame(() => {
+      const canvas = document.getElementById(`evc-${name}`);
+      if (!canvas || !ev.window || !ev.window.length) return;
+      if (evCharts[name]) evCharts[name].destroy();
+
+      const wLabels   = ev.window.map(w => `T${w.T >= 0 ? '+' : ''}${w.T}`);
+      const eventIdx  = ev.window.findIndex(w => w.T === 0);
+
+      const threshEv = {
+        id: `thresh-${name}`,
+        beforeDraw(chart) {
+          const {ctx:c, chartArea:{left,right}, scales:{y}} = chart;
+          [{v:0.50,col:'rgba(245,158,11,0.3)'},{v:0.75,col:'rgba(239,68,68,0.3)'},{v:1.00,col:'rgba(153,27,27,0.4)'}]
+          .forEach(({v,col}) => {
+            if (v > chart.scales.y.max) return;
+            const py = y.getPixelForValue(v);
+            c.save(); c.strokeStyle=col; c.lineWidth=0.8; c.setLineDash([3,3]);
+            c.beginPath(); c.moveTo(left,py); c.lineTo(right,py); c.stroke();
+            c.setLineDash([]); c.restore();
+          });
+        }
+      };
+
+      const maxMSI = Math.max(...ev.window.map(w => w.MSI_total_v562), 1.1);
+
+      evCharts[name] = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        plugins: [threshEv],
+        data: {
+          labels: wLabels,
+          datasets: [
+            {
+              label: 'MSI',
+              data: ev.window.map(w => w.MSI_total_v562),
+              borderColor: '#3b82f6', borderWidth: 1.8,
+              pointRadius: wLabels.map((_,i) => i === eventIdx ? 4 : 0),
+              pointBackgroundColor: ev.color,
+              fill: true, backgroundColor: 'rgba(59,130,246,0.07)',
+              tension: 0.3, yAxisID: 'y',
+            },
+            {
+              label: '잔액',
+              data: ev.window.map(w => w.balance_core || 0),
+              borderColor: '#10b981', borderWidth: 1.2,
+              pointRadius: 0, fill: false, tension: 0.3,
+              borderDash: [3,2], yAxisID: 'y2',
+            },
+            {
+              label: '신용도',
+              data: ev.window.map(w => w.credit_core || 0),
+              borderColor: '#f59e0b', borderWidth: 1.2,
+              pointRadius: 0, fill: false, tension: 0.3,
+              borderDash: [3,2], yAxisID: 'y2',
+            },
+            {
+              label: '만기',
+              data: ev.window.map(w => w.tenor_core || 0),
+              borderColor: '#a78bfa', borderWidth: 1.2,
+              pointRadius: 0, fill: false, tension: 0.3,
+              borderDash: [3,2], yAxisID: 'y2',
+            },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: {mode:'index', intersect:false},
+          plugins: {
+            legend: {display:false},
+            tooltip: {
+              backgroundColor:'#ffffff', borderColor:'#e5e7eb', borderWidth:1,
+              titleColor:'#111827', bodyColor:'#9ca3af',
+              callbacks: {label: i => ` ${i.dataset.label}: ${i.parsed.y.toFixed(3)}`}
+            }
+          },
+          scales: {
+            x: {
+              grid:{display:false},
+              ticks:{color:'#9ca3af', font:{size:8}, maxTicksLimit:7}
+            },
+            y: {
+              min:0, max: Math.ceil(maxMSI * 10) / 10,
+              position:'left',
+              grid:{color:'rgba(0,0,0,0.06)'},
+              ticks:{color:'#3b82f6', font:{size:8}, callback:v=>v.toFixed(1)}
+            },
+            y2: {
+              min:0, max:1.2,
+              position:'right',
+              grid:{display:false},
+              ticks:{color:'#9ca3af', font:{size:8}, callback:v=>v.toFixed(1)}
+            }
+          }
+        }
+      });
+    });
+  });
+}
+
+// ============================================================
+// 테이블
+// ============================================================
+function renderTable(rows) {
+  document.getElementById('tblBody').innerHTML = rows.map(d => {
+    const sc  = SC[d['MSI_v562_상태']] || SC['-'];
+    const ym  = String(d.YYYYMM);
+    const lbl = ym.slice(0,4) + '.' + ym.slice(4);
+    const msi = parseFloat(d.MSI_total_v562);
+    const pre = parseFloat(d.MSI_precursor_v562);
+    const tr  = parseFloat(d.MSI_trend_v562);
+    const bal = parseFloat(d.balance_core);
+    const cre = parseFloat(d.credit_core);
+    const ten = parseFloat(d.tenor_core);
+    return `<tr>
+      <td>${lbl}</td>
+      <td style="font-weight:700;color:${sc.color}">${msi.toFixed(3)}</td>
+      <td><span class="badge" style="background:${sc.bg};color:${sc.color}">${d['MSI_v562_상태']}</span></td>
+      <td style="color:#6b7280">${pre.toFixed(3)}</td>
+      <td style="color:#6b7280">${tr.toFixed(3)}</td>
+      <td style="color:${bal>0.5?'#ef4444':bal>0.3?'#f59e0b':'#9ca3af'}">${bal.toFixed(3)}</td>
+      <td style="color:${cre>0.5?'#ef4444':cre>0.3?'#f59e0b':'#9ca3af'}">${cre.toFixed(3)}</td>
+      <td style="color:${ten>0.5?'#ef4444':ten>0.3?'#f59e0b':'#9ca3af'}">${ten.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+}
+
+init();
+</script>
 </body>
 </html>
