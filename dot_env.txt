@@ -1,0 +1,6 @@
+# Market WatchDog 환경변수
+# 이 파일은 .gitignore에 포함되어 있습니다. 절대 깃에 올리지 마세요.
+# 이 파일명을 .env 로 바꿔서 사용하세요.
+
+# MSI sqlite 파일 루트 경로
+MSI_ROOT=E:\PROJECT\Market-WatchDog\master set\msi

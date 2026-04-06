@@ -1,0 +1,18 @@
+레거시 데이터1, 발행액파일
+경로 : E:\PROJECT\Market-WatchDog\legacy data (이경로에 각각 cp,abcp,ab단기사채 폴더있음)
+예시
+E:\PROJECT\Market-WatchDog\legacy data\abcp\26년1월 이경로에 있는 파일들 (ABCP 26년1월1주차)로 되어있다 4주던5주던 이경로 안에서 월로 합쳐서 이경로에 저장한다
+
+레거시데이터2, 잔액 파일
+경로 : E:\PROJECT\Market-WatchDog\legacy data2 (이경로에 각각 cp,abcp,ab단기사채,일반단기사채 폴더있음)
+잔액은 하나만 있기때문에 전처리는 필요없다 
+주의사항!! 단위가 억원이기때문에 원처리해야한다
+
+
+롤오버 전처리 
+
+E:\PROJECT\Market-WatchDog\master set\rollover\25년 12월 <<v4 경로
+이경로 파일로 긁어온 파일들 롤오버 지표 생성해주는데
+E:\PROJECT\Market-WatchDog\master set\rollover\26년 1월 <<1월까지 v4이어붙여서 여기에저장
+E:\PROJECT\Market-WatchDog\master set\rollover\26년 2월 << 2월까지 26년 1월 여기꺼 참고해서 저장하게 
+결론은 E:\PROJECT\Market-WatchDog\master set\rollover 이경로 안에서 폴더 날짜이름으로 체크해서 없는부분 만들면된다.

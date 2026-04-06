@@ -1,0 +1,194 @@
+[
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q1\tNormal (정상)\t0.809252616\t0.090027378\t0.100720006\t0\t0\tS1_Accel: 0.00 | S1_Delta: 0.00 | S2_Delta: 0.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q1\tNormal (정상)\t0.872088252\t0.07932659\t0.048585158\t0\t0\tS1_Accel: 0.00 | S1_Delta: 0.00 | S2_Delta: 0.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q2\tNormal (정상)\t0.863088252\t0.08932659\t0.047585158\t0\t0\tS1_Accel: 0.00 | S1_Delta: 0.00 | S2_Delta: 0.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q2\tNormal (정상)\t0.947791959\t0.013944417\t0.038263625\t0\t0\tS1_Accel: 0.00 | S1_Delta: 5.09 | S2_Delta: -9.73"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q3\tCaution (주의)\t0.176584992\t0.722721045\t0.100693963\t0\t0\tS1_Accel: -7.46 | S1_Delta: -2.37 | S2_Delta: -7.73"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2010\/Q4\tCaution (주의)\t0.22669853\t0.0821556\t0.69114587\t0\t0\tS1_Accel: 1.67 | S1_Delta: -0.69 | S2_Delta: 7.86"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2011\/Q1\tCaution (주의)\t0.069818397\t0.843296138\t0.086885465\t0\t0\tS1_Accel: -6.91 | S1_Delta: -7.60 | S2_Delta: 4.83"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2011\/Q2\tNormal (정상)\t0.911192752\t0.067160867\t0.021646381\t0\t0\tS1_Accel: 5.89 | S1_Delta: -1.72 | S2_Delta: -7.98"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2011\/Q3\tNormal (정상)\t0.773947614\t0.195412087\t0.0306403\t0\t0\tS1_Accel: 6.94 | S1_Delta: 5.23 | S2_Delta: -2.15"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2011\/Q4\tCaution (주의)\t0.06876455\t0.722055556\t0.209179894\t0\t0\tS1_Accel: -12.90 | S1_Delta: -7.67 | S2_Delta: -2.43"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2012\/Q1\tNormal (정상)\t0.782040206\t0.190023198\t0.027936596\t0\t0\tS1_Accel: 29.53 | S1_Delta: 21.86 | S2_Delta: -0.49"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2012\/Q2\tDanger (위험!!)\t0.035757576\t0.11032684\t0.853915584\t0\t0\tS1_Accel: -36.99 | S1_Delta: -15.13 | S2_Delta: -0.41"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2012\/Q3\tNormal (정상)\t0.621166291\t0.134429054\t0.244404655\t0\t0\tS1_Accel: -4.38 | S1_Delta: -19.51 | S2_Delta: 7.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2012\/Q4\tNormal (정상)\t0.776096023\t0.112632744\t0.111271233\t0\t0\tS1_Accel: 12.83 | S1_Delta: -6.68 | S2_Delta: 0.37"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2013\/Q1\tNormal (정상)\t0.769625103\t0.148925435\t0.081449463\t0\t0\tS1_Accel: 24.51 | S1_Delta: 17.83 | S2_Delta: 2.67"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2013\/Q2\tNormal (정상)\t0.911640369\t0.042908397\t0.045451234\t0\t0\tS1_Accel: -2.19 | S1_Delta: 15.64 | S2_Delta: -8.11"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2013\/Q3\tDanger (위험!!)\t0.066864719\t0.14248557\t0.790649711\t0\t0\tS1_Accel: -17.22 | S1_Delta: -1.58 | S2_Delta: 2.34"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2013\/Q4\tCaution (주의)\t0.276862085\t0.0751443\t0.647993615\t0\t0\tS1_Accel: 5.52 | S1_Delta: 3.95 | S2_Delta: 4.13"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2014\/Q1\tCaution (주의)\t0.058294587\t0.851304075\t0.090401338\t0\t0\tS1_Accel: -8.51 | S1_Delta: -4.57 | S2_Delta: 5.83"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2014\/Q2\tNormal (정상)\t0.965041959\t0.017686841\t0.017271201\t0\t0\tS1_Accel: 11.27 | S1_Delta: 6.70 | S2_Delta: -11.34"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2014\/Q3\tNormal (정상)\t0.883307024\t0.09170141\t0.024991566\t0\t0\tS1_Accel: 14.06 | S1_Delta: 20.77 | S2_Delta: -7.06"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2014\/Q4\tDanger (위험!!)\t0.074011905\t0.16244228\t0.763545815\t0\t0\tS1_Accel: -16.48 | S1_Delta: 4.29 | S2_Delta: 0.21"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2015\/Q1\tCaution (주의)\t0.06100327\t0.811292852\t0.127703878\t0\t0\tS1_Accel: -6.58 | S1_Delta: -2.30 | S2_Delta: 6.70"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2015\/Q2\tCaution (주의)\t0.146631092\t0.756198413\t0.097170496\t0\t0\tS1_Accel: -5.30 | S1_Delta: -7.59 | S2_Delta: -5.35"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2015\/Q3\tNormal (정상)\t0.872091846\t0.08454511\t0.043363044\t0\t0\tS1_Accel: 23.26 | S1_Delta: 15.67 | S2_Delta: -1.36"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2015\/Q4\tNormal (정상)\t0.906666428\t0.060332374\t0.033001198\t0\t0\tS1_Accel: 0.11 | S1_Delta: 15.78 | S2_Delta: -18.96"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2016\/Q1\tCaution (주의)\t0.185137151\t0.792025547\t0.022837302\t0\t0\tS1_Accel: 10.78 | S1_Delta: 26.56 | S2_Delta: 8.50"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2016\/Q2\tDanger (위험!!)\t0.084262626\t0.107436869\t0.808300505\t0\t0\tS1_Accel: -22.48 | S1_Delta: 4.07 | S2_Delta: -7.40"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2016\/Q3\tCaution (주의)\t0.091841103\t0.752151931\t0.156006965\t0\t0\tS1_Accel: -13.09 | S1_Delta: -9.02 | S2_Delta: 19.05"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2016\/Q4\tCaution (주의)\t0.445474011\t0.462611371\t0.091914618\t0\t0\tS1_Accel: 16.40 | S1_Delta: 7.38 | S2_Delta: -4.94"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2017\/Q1\tDanger (위험!!)\t0.042626263\t0.052350649\t0.905023088\t0\t0\tS1_Accel: -19.13 | S1_Delta: -11.75 | S2_Delta: 8.12"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2017\/Q2\tNormal (정상)\t0.879395649\t0.112316489\t0.008287862\t0\t0\tS1_Accel: 24.78 | S1_Delta: 13.03 | S2_Delta: -7.14"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2017\/Q3\tDanger (위험!!)\t0.013\t0.08925974\t0.89774026\t0\t0\tS1_Accel: -27.30 | S1_Delta: -14.27 | S2_Delta: 2.52"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2017\/Q4\tNormal (정상)\t0.926665563\t0.05333829\t0.019996147\t0\t0\tS1_Accel: 25.52 | S1_Delta: 11.25 | S2_Delta: -18.42"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2018\/Q1\tCaution (주의)\t0.060138096\t0.761144621\t0.178717283\t0\t0\tS1_Accel: -10.33 | S1_Delta: 0.92 | S2_Delta: 26.96"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2018\/Q2\tDanger (위험!!)\t0.072727273\t0.030575758\t0.89669697\t0\t0\tS1_Accel: -21.68 | S1_Delta: -20.76 | S2_Delta: -16.11"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2018\/Q3\tNormal (정상)\t0.714542884\t0.16809793\t0.117359187\t0\t0\tS1_Accel: 15.02 | S1_Delta: -5.73 | S2_Delta: 6.30"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2018\/Q4\tNormal (정상)\t0.907356779\t0.051615707\t0.041027514\t0\t0\tS1_Accel: 20.43 | S1_Delta: 14.69 | S2_Delta: -9.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2019\/Q1\tDanger (위험!!)\t0.082727273\t0.020909091\t0.896363636\t0\t0\tS1_Accel: -33.68 | S1_Delta: -18.99 | S2_Delta: -44.77"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2019\/Q2\tCaution (주의)\t0.213706722\t0.762122643\t0.024170635\t0\t0\tS1_Accel: 48.62 | S1_Delta: 29.63 | S2_Delta: 48.69"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2019\/Q3\tDanger (위험!!)\t0.063330087\t0.145817821\t0.790852092\t1\t0\tS1_Accel: -19.66 | S1_Delta: 9.97 | S2_Delta: 4.46"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2019\/Q4\tNormal (정상)\t0.769927126\t0.117666573\t0.112406302\t1\t0\tS1_Accel: 15.51 | S1_Delta: 25.48 | S2_Delta: -4.98"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2020\/Q1\tDanger (위험!!)\t0.027272727\t0.086350649\t0.886376623\t0\t1\tS1_Accel: -78.88 | S1_Delta: -53.40 | S2_Delta: 12.81"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2020\/Q2\tNormal (정상)\t0.778482647\t0.096583389\t0.124933964\t0\t0\tS1_Accel: 44.48 | S1_Delta: -8.93 | S2_Delta: -8.34"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2020\/Q3\tNormal (정상)\t0.924595962\t0.060606544\t0.014797494\t0\t0\tS1_Accel: 27.75 | S1_Delta: 18.83 | S2_Delta: -17.57"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2020\/Q4\tCaution (주의)\t0.111452381\t0.682876984\t0.205670635\t0\t0\tS1_Accel: -10.73 | S1_Delta: 8.10 | S2_Delta: 1.15"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2021\/Q1\tDanger (위험!!)\t0.01\t0.106714286\t0.883285714\t0\t0\tS1_Accel: -27.67 | S1_Delta: -19.57 | S2_Delta: 12.90"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2021\/Q2\tNormal (정상)\t0.837346683\t0.038360873\t0.124292444\t0\t0\tS1_Accel: 16.79 | S1_Delta: -2.78 | S2_Delta: -38.44"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2021\/Q3\tNormal (정상)\t0.740456829\t0.211697318\t0.047845852\t0\t0\tS1_Accel: 10.78 | S1_Delta: 8.00 | S2_Delta: 32.16"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2021\/Q4\tNormal (정상)\t0.93700842\t0.045050988\t0.017940592\t0\t0\tS1_Accel: 1.66 | S1_Delta: 9.67 | S2_Delta: -10.72"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2022\/Q1\tDanger (위험!!)\t0.022272727\t0.029350649\t0.948376623\t0\t0\tS1_Accel: -40.06 | S1_Delta: -30.39 | S2_Delta: 23.00"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2022\/Q2\tCaution (주의)\t0.276588884\t0.113135281\t0.610275835\t0\t0\tS1_Accel: 8.61 | S1_Delta: -21.78 | S2_Delta: -7.42"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2022\/Q3\tCaution (주의)\t0.309644995\t0.121553152\t0.568801853\t0\t1\tS1_Accel: 12.52 | S1_Delta: -9.26 | S2_Delta: -0.62"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2022\/Q4\tCaution (주의)\t0.094181506\t0.756901533\t0.148916961\t0\t0\tS1_Accel: -6.04 | S1_Delta: -15.30 | S2_Delta: 2.25"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2023\/Q1\tNormal (정상)\t0.706017445\t0.144325973\t0.149656582\t0\t0\tS1_Accel: 15.81 | S1_Delta: 0.51 | S2_Delta: 11.33"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2023\/Q2\tCaution (주의)\t0.065347884\t0.723861111\t0.210791005\t0\t0\tS1_Accel: -10.83 | S1_Delta: -10.32 | S2_Delta: -6.73"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2023\/Q3\tCaution (주의)\t0.451817596\t0.491654549\t0.056527855\t0\t0\tS1_Accel: 13.86 | S1_Delta: 3.54 | S2_Delta: -3.54"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2023\/Q4\tCaution (주의)\t0.104240114\t0.407626225\t0.488133661\t0\t0\tS1_Accel: -9.28 | S1_Delta: -5.75 | S2_Delta: -1.46"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2024\/Q1\tCaution (주의)\t0.365712364\t0.133814674\t0.500472962\t0\t1\tS1_Accel: 4.97 | S1_Delta: -0.77 | S2_Delta: 8.43"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2024\/Q2\tNormal (정상)\t0.703490316\t0.239137444\t0.05737224\t0\t0\tS1_Accel: -3.59 | S1_Delta: -4.36 | S2_Delta: -4.70"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2024\/Q3\tCaution (주의)\t0.341875725\t0.508142296\t0.149981979\t0\t0\tS1_Accel: 2.65 | S1_Delta: -1.71 | S2_Delta: 10.29"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2024\/Q4\tNormal (정상)\t0.923754565\t0.050329032\t0.025916403\t0\t0\tS1_Accel: -1.45 | S1_Delta: -3.16 | S2_Delta: -13.41"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2025\/Q1\tNormal (정상)\t0.714596442\t0.129422299\t0.155981259\t0\t0\tS1_Accel: 8.99 | S1_Delta: 5.82 | S2_Delta: 4.44"
+    },
+    {
+        "분기\tEWS_Result_Status\tp_normal\tp_caution\tp_risk\toverheat_flag\tevent_flag\tExplanation_Top3":"2025\/Q2\tCaution (주의)\t0.120971861\t0.692137085\t0.186891053\t0\t0\tS1_Accel: -9.96 | S1_Delta: -4.14 | S2_Delta: -6.25"
+    }
+]
