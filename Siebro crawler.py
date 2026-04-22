@@ -26,12 +26,24 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+
+def last_completed_month_end(today=None):
+    base = today or date.today()
+    return base.replace(day=1) - relativedelta(days=1)
+
+
+def env_date(name, default):
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    return date.fromisoformat(raw)
+
 # ============================================================
 # 설정
 # =======================시작날짜 끝날짜 설정=====================================
 BASE_SAVE_DIR   = r"E:\PROJECT\Market-WatchDog\legacy data"
-CRAWL_START     = date(2016, 1, 1)    # 수집 시작
-CRAWL_END       = date(2025, 12, 1)   # 수집 끝 (매년 갱신)
+CRAWL_START     = env_date("CRAWL_START", date(2016, 1, 1))    # 수집 시작
+CRAWL_END       = env_date("CRAWL_END", last_completed_month_end())
 WAIT_SEARCH     = 40                   # 조회 후 대기 (초)
 WAIT_PAGE_LOAD  = 10                   # 페이지 초기 로딩
 

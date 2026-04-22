@@ -19,10 +19,24 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+
+
+def last_completed_month_end(today=None):
+    base = today or date.today()
+    return base.replace(day=1) - relativedelta(days=1)
+
+
+def env_date(name, default):
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    return date.fromisoformat(raw)
+
+
 #===============시작일 종료일===========================
 BASE_SAVE_DIR = r"E:\PROJECT\Market-WatchDog\legacy data2"
-CRAWL_START   = date(2026, 1, 1)
-CRAWL_END     = date(2026, 3, 31)
+CRAWL_START   = env_date("CRAWL_START", date(2026, 1, 1))
+CRAWL_END     = env_date("CRAWL_END", last_completed_month_end())
 WAIT_SEARCH   = 40
 WAIT_PAGE     = 10
 

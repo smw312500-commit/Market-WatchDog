@@ -1,8 +1,19 @@
-import requests
-from bs4 import BeautifulSoup
+try:
+    import requests
+except ModuleNotFoundError:
+    requests = None
+
+try:
+    from bs4 import BeautifulSoup
+except ModuleNotFoundError:
+    BeautifulSoup = None
 
 def crawl_infomax_search(query):
     """특정 키워드로 검색해서 최신 뉴스 가져오기"""
+    if requests is None or BeautifulSoup is None:
+        print(f"[news disabled] missing dependency while searching: {query}")
+        return []
+
     url = f"https://news.einfomax.co.kr/news/articleList.html?sc_area=A&view_type=sm&sc_word={query}"
     headers = {"User-Agent": "Mozilla/5.0"}
 

@@ -23,7 +23,10 @@ MSI v56.2
 from __future__ import annotations
 
 import re
+import os
+import shutil
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -139,19 +142,43 @@ def make_sqlite_path(latest_month_dir: Path) -> Path:
     return target_dir / f"MSI_v562_{month_name}.sqlite"
 
 
-def save_to_sqlite(df: pd.DataFrame, db_path: Path, table_name: str = SQLITE_TABLE) -> None:
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(db_path) as conn:
+def save_to_sqlite(df: pd.DataFrame, db_path: Path, table_name: str = SQLITE_TABLE) -> Path:
+    def prepare_save_df() -> pd.DataFrame:
         save_df = df.copy()
         for c in save_df.columns:
             if pd.api.types.is_datetime64_any_dtype(save_df[c]):
                 save_df[c] = save_df[c].dt.strftime("%Y-%m-%d")
-        save_df.to_sql(table_name, conn, if_exists="replace", index=False)
+        return save_df
+
+    def write_sqlite(target_path: Path, save_df: pd.DataFrame) -> None:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(str(target_path)) as conn:
+            # Some Windows/removable-drive setups in this project fail when
+            # SQLite tries to create rollback/WAL journal files. Use a
+            # single-file mode so monthly MSI snapshots can still be written.
+            conn.execute("PRAGMA journal_mode=OFF")
+            conn.execute("PRAGMA synchronous=OFF")
+            save_df.to_sql(table_name, conn, if_exists="replace", index=False)
+            try:
+                conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_yyyymm ON {table_name}(YYYYMM)")
+            except Exception:
+                pass
+            conn.commit()
+
+    save_df = prepare_save_df()
+    fd, temp_name = tempfile.mkstemp(suffix=db_path.suffix)
+    fallback_path = db_path.with_name(f"{db_path.stem}_copy{db_path.suffix}")
+    try:
+        os.close(fd)
+        Path(temp_name).unlink(missing_ok=True)
+        write_sqlite(Path(temp_name), save_df)
+        shutil.copyfile(temp_name, fallback_path)
+        return fallback_path
+    finally:
         try:
-            conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_yyyymm ON {table_name}(YYYYMM)")
+            Path(temp_name).unlink(missing_ok=True)
         except Exception:
             pass
-        conn.commit()
 
 
 def rolling_linear_baseline(series: pd.Series, window: int = 24, min_periods: int = 12) -> pd.Series:
@@ -384,8 +411,8 @@ def main() -> None:
     print(f"[DONE] CSV 저장 완료: {CSV_OUT_FILE}")
 
     sqlite_path = make_sqlite_path(latest_month_dir)
-    save_to_sqlite(out, sqlite_path, SQLITE_TABLE)
-    print(f"[DONE] SQLite 저장 완료: {sqlite_path}")
+    written_sqlite_path = save_to_sqlite(out, sqlite_path, SQLITE_TABLE)
+    print(f"[DONE] SQLite 저장 완료: {written_sqlite_path}")
     print(f"[DONE] SQLite 테이블명: {SQLITE_TABLE}")
 
 

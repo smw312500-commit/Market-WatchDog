@@ -5,15 +5,37 @@ import sqlite3
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request
 from crawler import get_multiple_keywords_news
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    def load_dotenv():
+        return False
 
 load_dotenv()
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+
+def resolve_path(env_name: str, default: Path) -> Path:
+    raw = os.getenv(env_name)
+    if not raw:
+        return default
+    path = Path(raw)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def env_flag(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
 app = Flask(__name__)
 
-basedir   = os.path.abspath(os.path.dirname(__file__))
-MARKET_DB = os.path.join(basedir, 'market_watchdog.db')
-MSI_ROOT  = Path(os.getenv("MSI_ROOT", r"E:\PROJECT\Market-WatchDog\master set\msi"))
+MARKET_DB = resolve_path("MARKET_DB", PROJECT_ROOT / "market_watchdog.db")
+MSI_ROOT = resolve_path("MSI_ROOT", PROJECT_ROOT / "master set" / "msi")
+FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")
+FLASK_PORT = int(os.getenv("FLASK_PORT", os.getenv("PORT", "5000")))
+FLASK_DEBUG = env_flag("FLASK_DEBUG")
 
 PROJECT_NAME = "Market WatchDog"
 
@@ -22,7 +44,7 @@ PROJECT_NAME = "Market WatchDog"
 # 시장 데이터 DB 유틸
 # =========================================================
 def query_db(sql: str, params: tuple = ()) -> list[dict]:
-    conn = sqlite3.connect(MARKET_DB)
+    conn = sqlite3.connect(str(MARKET_DB))
     conn.row_factory = sqlite3.Row
     try:
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
@@ -47,6 +69,18 @@ def build_range_clause(from_ym, to_ym):
 # =========================================================
 def find_latest_msi_db() -> str:
     pattern = re.compile(r"(\d{2})년\s*(\d{1,2})월")
+
+    def is_readable_sqlite(path: Path) -> bool:
+        try:
+            with sqlite3.connect(str(path)) as conn:
+                row = conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+                    ("msi_v562_monthly",),
+                ).fetchone()
+            return row is not None
+        except sqlite3.Error:
+            return False
+
     candidates = []
     for d in MSI_ROOT.iterdir():
         if not d.is_dir():
@@ -54,9 +88,10 @@ def find_latest_msi_db() -> str:
         m = pattern.fullmatch(d.name.strip())
         if m:
             yyyymm = int(f"20{m.group(1)}{int(m.group(2)):02d}")
-            dbs = list(d.glob("*.sqlite"))
-            if dbs:
-                candidates.append((yyyymm, dbs[0]))
+            dbs = sorted(d.glob("*.sqlite"), key=lambda p: p.stat().st_mtime, reverse=True)
+            readable = next((db for db in dbs if is_readable_sqlite(db)), None)
+            if readable is not None:
+                candidates.append((yyyymm, readable))
     if not candidates:
         raise FileNotFoundError(f"MSI sqlite 없음: {MSI_ROOT}")
     return str(max(candidates, key=lambda x: x[0])[1])
@@ -64,7 +99,7 @@ def find_latest_msi_db() -> str:
 
 def query_msi(sql, params=()):
     db_path = find_latest_msi_db()
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
@@ -283,4 +318,4 @@ def api_msi_latest():
 
 if __name__ == '__main__':
     print(f"[{PROJECT_NAME}] 서버 가동 중...")
-    app.run(debug=True, port=5000)
+    app.run(host=FLASK_HOST, debug=FLASK_DEBUG, port=FLASK_PORT)
