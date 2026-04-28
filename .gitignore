@@ -12,3 +12,14 @@ __pycache__/
 *.crdownload
 *.tmp
 자료/
+legacy data/
+legacy data2/
+data/
+master set/
+market_watchdog.db
+dot_env.txt
+gitignore.txt
+*.db
+*.sqlite
+*.xls
+*.xlsx
