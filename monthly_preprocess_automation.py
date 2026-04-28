@@ -586,8 +586,28 @@ def save_month_output(month_name: str, month_results: Dict[str, pd.DataFrame], s
         append_and_save(base_file, out_file, new_df)
 
 
-def build_one_month_output(month_name: str, base_month_dir: Path) -> None:
+def find_prev_month_dir(target_yyyymm: int) -> Path:
+    """target_yyyymm보다 이전인 전처리 폴더 중 가장 최신 폴더를 반환."""
+    pattern = re.compile(r"(\d{2})년\s*(\d{1,2})월")
+    candidates = []
+    for d in OUT_ROOT.iterdir():
+        if not d.is_dir():
+            continue
+        m = pattern.fullmatch(d.name.strip())
+        if m:
+            yyyymm = int(f"20{m.group(1)}{int(m.group(2)):02d}")
+            if yyyymm < target_yyyymm:
+                candidates.append((yyyymm, d))
+    if not candidates:
+        raise FileNotFoundError(f"기준본 폴더를 찾을 수 없음: {OUT_ROOT}")
+    return max(candidates, key=lambda x: x[0])[1]
+
+
+def build_one_month_output(month_name: str, base_month_dir: Optional[Path] = None):
     yyyymm = parse_target_month(month_name)
+
+    if base_month_dir is None:
+        base_month_dir = find_prev_month_dir(yyyymm)
 
     print(f"[시작] 대상월: {month_name} / {yyyymm}")
     print(f"[기준본] {base_month_dir}")
@@ -607,6 +627,7 @@ def build_one_month_output(month_name: str, base_month_dir: Path) -> None:
     save_month_output(month_name, abstb_result, "3 ABSTB", base_month_dir)
 
     print(f"[완료] 산출 폴더 생성: {OUT_ROOT / month_name}")
+    return yyyymm, cp_result, abcp_result, abstb_result
 
 
 # =========================================================
@@ -614,11 +635,13 @@ def build_one_month_output(month_name: str, base_month_dir: Path) -> None:
 # =========================================================
 if __name__ == "__main__":
     target_month = input("생성할 대상 월 입력 (예: 26년1월): ").strip()
-    base_input = input("기준본 월 폴더명 입력 (엔터 시 '25년 12월'): ").strip()
+    base_input = input("기준본 월 폴더명 입력 (엔터 시 자동 탐색): ").strip()
 
-    base_month_dir = OUT_ROOT / base_input if base_input else DEFAULT_BASE_MONTH_DIR
-
-    if not base_month_dir.exists():
-        raise FileNotFoundError(f"기준본 폴더 없음: {base_month_dir}")
+    if base_input:
+        base_month_dir = OUT_ROOT / base_input
+        if not base_month_dir.exists():
+            raise FileNotFoundError(f"기준본 폴더 없음: {base_month_dir}")
+    else:
+        base_month_dir = None
 
     build_one_month_output(target_month, base_month_dir)

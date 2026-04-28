@@ -1,8 +1,21 @@
 # Market WatchDog
 
-CP, ABCP, ABSTB 데이터를 기반으로 시장 상태를 보는 Flask 대시보드입니다.
+한국 단기금융시장(CP·ABCP·AB단기사채)의 발행·잔액·신용·만기 데이터를 월별로 수집·가공해, 시장 스트레스를 실시간으로 모니터링하는 Flask 기반 대시보드입니다.
 
-이 저장소는 현재 `2026년 2월` 기준 데이터 스냅샷으로 바로 화면을 확인할 수 있게 정리되어 있습니다.
+### 주요 기능
+
+**HOME** — 시장 뉴스 모니터링
+연합인포맥스에서 주요 키워드별 최신 기사를 자동 수집해 세 카테고리(직접금융·발행 / 단기자금·유동성 / 신용위험·시스템리스크)로 분류합니다.
+
+**INDICATORS** — 시계열 지표 대시보드
+CP·ABCP·AB단기사채 3개 시장의 잔액·발행액·만기구조·신용등급 비중을 2016년부터 월별 누적 차트로 제공합니다. 전체·24·12·6·3개월 기간 선택 및 커스텀 범위 조회를 지원합니다.
+
+**ANALYSIS** — 시장 스트레스 지수 (MSI v56.2)
+잔액 이탈·신용도·만기구조 3개 축을 합산한 복합 스트레스 지수를 산출합니다. 레고랜드 사태(2022.10)를 기준점(1.00)으로 정규화하며, 정상·주의·경고·위험 4단계 상태를 게이지와 시계열로 표시합니다. 코로나·레고랜드·새마을금고·태영건설 등 주요 사건의 T-8 ~ T+4 구간 패턴도 함께 제공합니다.
+
+---
+
+이 저장소는 현재 `2026년 3월` 기준 데이터 스냅샷으로 바로 화면을 확인할 수 있게 정리되어 있습니다.
 
 ## 빠른 실행
 
@@ -34,23 +47,25 @@ python app.py
 - MSI sqlite: `master set/msi/26년2월`
 - Flask 화면은 현재 기준으로 `2026년 2월`까지 보이도록 맞춰져 있습니다.
 
-## 3월 데이터 업데이트 순서
+## 월별 데이터 업데이트
 
-유지보수용 로컬 PC에서 아래 순서로 갱신하면 됩니다.
+`run_pipeline.py`를 실행하면 크롤링 → 전처리 → DB 업데이트 → MSI 재계산이 한 번에 됩니다.
 
 ```bash
-python "Siebro crawler.py"
-python "Seibro balance crawler.py"
-python monthly_preprocess_automation.py
-python rollover_auto.py
-python init_db.py --month "26년3월"
-python MSI_v562_sqlite.py
+python run_pipeline.py 26년4월
 ```
 
-입력 단계에서 다음 값을 쓰면 됩니다.
+원천 파일이 이미 있으면 크롤링을 건너뛸 수 있습니다.
 
-- `monthly_preprocess_automation.py`: 대상 월 `26년3월`, 기준 월 `26년2월`
-- `rollover_auto.py`: 대상 월 `26년3월`
+```bash
+SKIP_CRAWL=1 python run_pipeline.py 26년4월
+```
+
+롤오버 분석이 필요하면 파이프라인 실행 후 별도로 실행합니다.
+
+```bash
+python rollover_auto.py
+```
 
 ## 참고
 
