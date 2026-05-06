@@ -1,25 +1,51 @@
+# ── 환경변수 (절대 커밋 금지) ────────────────────────────────
 .env
-.deps/
-.venv/
-venv/
+*API키*
+dot_env.txt
+
+# ── Python ───────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+.venv/
+.venv314/
+venv/
+
+# ── IDE ──────────────────────────────────────────────────────
 .idea/
 .vscode/
+.claude/
 *.iml
-*.crdownload
-*.tmp
-자료/
+
+# ── DB / 데이터 ───────────────────────────────────────────────
+*.db
+*.sqlite
+market_watchdog.db
+
+# ── 생성 파일 (파이프라인 출력) ───────────────────────────────
+model_output.json
+model_output_enc.json
+ai_summary.json
+model/*.pkl
+model/*.joblib
+
+# ── 원천 데이터 (용량 큼) ─────────────────────────────────────
 legacy data/
 legacy data2/
 data/
 master set/
-market_watchdog.db
-dot_env.txt
-gitignore.txt
-*.db
-*.sqlite
+자료/
+
+# ── 스크린샷 / 임시 파일 ──────────────────────────────────────
+screenshots/
+*.crdownload
+*.tmp
+
+# ── 문서 / 엑셀 ──────────────────────────────────────────────
 *.xls
 *.xlsx
+*.docx
+
+# ── 기타 ─────────────────────────────────────────────────────
+gitignore.txt

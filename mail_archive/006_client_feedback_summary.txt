@@ -1,0 +1,30 @@
+From: sales@yourcompany.com
+To: product-team@yourcompany.com
+CC: ceo@yourcompany.com
+Date: March 2, 2026
+Subject: Q4 2025 Client Satisfaction Survey — Summary of Findings
+
+Hi Team,
+
+Attached is the compiled summary of our Q4 2025 client satisfaction
+survey, conducted across 47 active accounts. Here are the headline
+findings:
+
+Overall Satisfaction Score:  8.1 / 10  (up from 7.6 in Q3)
+Net Promoter Score (NPS):    +42        (industry benchmark: +35)
+On-time Delivery Rating:     7.4 / 10  (down from 7.9 — flagged)
+Product Quality Rating:      8.8 / 10
+
+Key qualitative feedback themes:
+  Positive — "Responsive account management", "Consistent quality"
+  Negative — "Lead times longer than competitors", "Portal UX needs work"
+
+The decline in delivery rating aligns with the logistics disruptions
+we experienced in November and December. The operations team is
+already working on revised SLA targets for 2026.
+
+Please review the full report and come prepared to the March 10
+product-sales alignment meeting with your response plan.
+
+Best,
+Sales Strategy Team

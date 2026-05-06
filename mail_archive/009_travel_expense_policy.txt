@@ -1,0 +1,31 @@
+From: finance@yourcompany.com
+To: all-staff@yourcompany.com
+Date: March 18, 2026
+Subject: Reminder — Travel Expense Reimbursement Submission Deadline
+
+Dear All,
+
+This is a reminder that travel expense reports for Q1 2026
+(January 1 through March 31) must be submitted no later than
+April 15, 2026.
+
+Reimbursable expense categories and limits:
+  Domestic flights:      Economy class only
+  International flights: Business class for flights over 6 hours
+  Hotel accommodation:   Up to KRW 200,000 per night (domestic)
+                         Up to USD 180 per night (international)
+  Meals per diem:        KRW 50,000 per day (domestic)
+                         USD 60 per day (international)
+  Ground transportation: Actual cost with receipt
+
+All claims must be submitted via the expense portal with original
+receipts attached. Claims submitted without receipts will not be
+processed.
+
+Late submissions will be carried over to the next quarter and may
+require additional approval from your department head.
+
+For assistance, contact the finance helpdesk at ext. 2200 or
+expenses@yourcompany.com.
+
+Finance Operations Team

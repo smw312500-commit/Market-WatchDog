@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ project_name }} - MSI 분석</title>
+<title>{{ project_name }} - 시장감시</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
@@ -19,6 +19,7 @@
   --red:     #ef4444;
   --darkred: #991b1b;
   --blue:    #3b82f6;
+  --purple:  #a78bfa;
   --mono:    'Courier New', monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -31,82 +32,141 @@ nav a:hover,nav a.active{color:#ddd;}
 
 .page{max-width:1440px;margin:0 auto;padding:20px 20px 60px;}
 
-/* ── 헤더 ── */
 .page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
 .page-header h2{font-size:17px;color:var(--bright);font-weight:500;}
 .page-header h2 span{color:var(--blue);}
 .page-header p{font-size:11px;color:var(--muted);margin-top:3px;}
 .data-badge{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border2);padding:4px 10px;border-radius:3px;}
 
-/* ── 상단 4개 카드 ── */
-.top-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+/* 상단 카드 */
+.top-cards{display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr;gap:12px;margin-bottom:18px;}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .card.c-normal::before{background:var(--green);}
 .card.c-watch::before{background:var(--amber);}
 .card.c-warning::before{background:var(--red);}
 .card.c-danger::before{background:var(--darkred);}
-.card.c-comment::before{background:var(--blue);}
 .card-label{font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;}
-.card-val{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;color:var(--bright);}
-.card-status{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:5px;}
-.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.card-sub{font-size:11px;color:var(--muted);margin-top:5px;}
-.card-comment{font-size:12px;line-height:1.7;color:var(--text);}
-.card-comment strong{color:var(--bright);}
+.card-instrument{font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);}
+.card-level{font-size:28px;font-weight:700;line-height:1;margin-bottom:6px;}
+.card-score{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:4px;}
+.card-signal{font-size:11px;color:var(--muted);}
+.card-ym{font-size:10px;color:var(--muted);margin-top:6px;font-family:var(--mono);}
+.card-ai{display:flex;flex-direction:column;}
+.card-ai .ai-label{font-size:10px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.card-ai .ai-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.card-ai .ai-body{font-size:12px;line-height:1.75;color:var(--text);flex:1;}
+.card-ai .ai-loading{font-size:11px;color:var(--muted);font-style:italic;}
 
-/* ── 메인 그리드 ── */
-.main-grid{display:grid;grid-template-columns:300px 1fr;gap:14px;margin-bottom:14px;}
+/* 차트 섹션 */
+.chart-section{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:14px;}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.chart-title{font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.chart-controls{display:flex;gap:8px;align-items:center;}
+.tab-btn{font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.tab-btn.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.legend{display:flex;gap:14px;font-size:10px;color:var(--muted);flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:4px;}
+.legend-line{width:16px;height:2px;border-radius:1px;}
+.legend-dash{width:18px;height:0;border-top:2px dashed;}
+.chart-wrap{height:280px;position:relative;}
 
-/* ── 패널 공통 ── */
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;}
-.panel-title{font-size:10px;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
-
-/* ── 게이지 ── */
-.gauge-wrap{position:relative;width:200px;height:105px;margin:0 auto;}
-#gaugeCanvas{width:200px;height:105px;}
-.gauge-val{position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center;}
-.gauge-num{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1;}
-.gauge-lbl{font-size:11px;margin-top:3px;display:flex;align-items:center;justify-content:center;gap:4px;}
-.gauge-ticks{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center;font-size:9px;color:var(--muted);}
-.gtick{display:flex;align-items:center;gap:3px;}
-.gdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-
-/* ── 신호 분해 ── */
-.sig-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
-.sig-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
-.sig-name{font-size:10px;color:var(--muted);width:68px;flex-shrink:0;text-align:right;}
-.sig-bar-bg{flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;}
-.sig-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
-.sig-val{font-family:var(--mono);font-size:10px;width:40px;text-align:right;flex-shrink:0;}
-
-/* ── 차트 ── */
-.chart-wrap{height:260px;position:relative;}
-
-/* ── 사건 섹션 ── */
-.event-section{margin-bottom:14px;}
-.event-section .section-title{font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.event-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-.ev-panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;}
-.ev-header{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
-.ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.ev-name{font-size:13px;font-weight:500;color:var(--bright);}
-.ev-meta{font-size:10px;color:var(--muted);}
-.ev-score{font-family:var(--mono);font-size:22px;font-weight:700;margin:6px 0 2px;}
-.ev-type{font-size:10px;color:var(--muted);}
-.ev-chart-wrap{height:120px;position:relative;margin-top:10px;}
-
-/* ── 테이블 ── */
+/* 테이블 */
 .tbl-section{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;}
-.tbl-wrap{overflow-x:auto;margin-top:4px;}
+.tbl-title{font-size:10px;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
+.tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:11px;}
-th{font-size:9px;color:var(--muted);padding:7px 10px;text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap;letter-spacing:.3px;}
-td{padding:6px 10px;text-align:center;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(255,255,255,0.03);}
-tr:hover td{background:rgba(59,130,246,0.04);}
+th{font-size:9px;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border2);white-space:nowrap;letter-spacing:.3px;}
+th.g-cp{color:var(--blue);}
+th.g-abcp{color:var(--green);}
+th.g-abstb{color:var(--purple);}
+td{padding:6px 10px;text-align:center;font-family:var(--mono);font-size:11px;border-bottom:1px solid rgba(0,0,0,0.03);}
+tr:hover td{background:rgba(59,130,246,0.03);}
 .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:600;}
-      #btn-balance.active{background:#10b981;color:#000;}
-      #btn-credit.active{background:#f59e0b;color:#000;}
-      #btn-tenor.active{background:#a78bfa;color:#000;}
+
+/* ── 도움말 아이콘 ── */
+.help-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;
+  background:var(--border2);color:var(--muted);
+  font-size:9px;font-weight:700;cursor:default;
+  position:relative;flex-shrink:0;margin-left:6px;vertical-align:middle;
+}
+.help-icon:hover{background:#6b7280;color:#fff;}
+.help-tooltip{
+  display:none;position:absolute;top:20px;right:0;
+  width:280px;background:#1e2430;color:#d1d5db;
+  font-size:11px;line-height:1.7;padding:12px 14px;
+  border-radius:6px;border:1px solid #374151;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:100;
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  white-space:normal;text-align:left;
+}
+.help-tooltip .tt-title{color:#f9fafb;font-weight:600;margin-bottom:4px;font-size:12px;}
+.help-tooltip .tt-sep{border:none;border-top:1px solid #374151;margin:8px 0;}
+.help-tooltip .tt-row{display:flex;gap:6px;margin-bottom:3px;}
+.help-tooltip .tt-key{color:#9ca3af;flex-shrink:0;min-width:36px;}
+.help-tooltip .tt-val{color:#d1d5db;}
+.help-icon:hover .help-tooltip{display:block;}
+
+/* ── AI 채팅 ── */
+#chatBtn{
+  position:fixed;bottom:28px;right:28px;z-index:200;
+  width:52px;height:52px;border-radius:50%;
+  background:#1a1a1a;border:2px solid #22c55e;
+  color:#22c55e;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  transition:transform .15s;
+}
+#chatBtn:hover{transform:scale(1.08);}
+#chatPanel{
+  position:fixed;bottom:92px;right:28px;z-index:200;
+  width:360px;height:500px;
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.15);
+  display:none;flex-direction:column;overflow:hidden;
+}
+#chatPanel.open{display:flex;}
+.chat-header{
+  background:#1a1a1a;color:#22c55e;
+  padding:12px 16px;font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.chat-close{cursor:pointer;color:#888;font-size:16px;line-height:1;}
+.chat-close:hover{color:#fff;}
+.chat-messages{
+  flex:1;overflow-y:auto;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+  font-size:12px;
+}
+.chat-bubble{
+  max-width:85%;padding:8px 12px;border-radius:10px;line-height:1.6;
+}
+.chat-bubble.user{
+  align-self:flex-end;background:#1a1a1a;color:#f9fafb;
+  border-bottom-right-radius:3px;
+}
+.chat-bubble.ai{
+  align-self:flex-start;background:#f3f4f6;color:#111827;
+  border-bottom-left-radius:3px;
+}
+.chat-bubble.typing{color:#9ca3af;font-style:italic;}
+.chat-input-row{
+  display:flex;gap:8px;padding:10px 12px;
+  border-top:1px solid var(--border);background:#fff;
+}
+.chat-input-row input{
+  flex:1;border:1px solid var(--border2);border-radius:6px;
+  padding:7px 10px;font-size:12px;outline:none;
+}
+.chat-input-row input:focus{border-color:#22c55e;}
+.chat-input-row button{
+  background:#1a1a1a;color:#22c55e;border:none;
+  border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;
+}
+.chat-input-row button:hover{background:#333;}
 </style>
 </head>
 <body>
@@ -116,120 +176,156 @@ tr:hover td{background:rgba(59,130,246,0.04);}
   <a href="/">HOME</a>
   <a href="/indicators">INDICATORS</a>
   <a href="/analysis" class="active">ANALYSIS</a>
+  <a href="/demo">DECOY DEMO</a>
+  <a href="/admin">ADMIN</a>
 </nav>
 
 <div class="page">
 
   <div class="page-header">
     <div>
-      <h2>시장 스트레스 지수 — <span>MSI v56.2</span></h2>
-      <p>한국 단기금융시장 | CP · ABCP · AB단기사채 | 잔액비중 · 만기구조 · 신용도 복합 모델</p>
+      <h2>시장감시</h2>
+      <p>한국 단기금융시장 | CP · ABCP · AB단기사채 | 시장 스트레스(0~1) · 추세 이탈도</p>
     </div>
     <div class="data-badge" id="dataBadge">DATA: —</div>
   </div>
 
-  <!-- 상단 4개 카드 -->
+  <!-- 상단 3카드 -->
   <div class="top-cards">
-    <div class="card" id="cardMsi">
-      <div class="card-label">MSI v56.2 종합</div>
-      <div class="card-val" id="cvMsi">—</div>
-      <div class="card-status"><span class="status-dot" id="cdMsiDot"></span><span id="cdMsiSt">—</span></div>
+    <div class="card" id="cardCp">
+      <div class="card-instrument">CP (기업어음)</div>
+      <div class="card-level" id="lvCp">—</div>
+      <div class="card-score">스트레스 <span id="scCp" style="font-weight:700">—</span></div>
+      <div class="card-signal" id="sigCp">—</div>
+      <div class="card-ym" id="ymCp">—</div>
     </div>
-    <div class="card" id="cardPre">
-      <div class="card-label">선행신호 (Precursor)</div>
-      <div class="card-val" id="cvPre">—</div>
-      <div class="card-status"><span class="status-dot" id="cdPreDot"></span><span id="cdPreSt">—</span></div>
-      <div class="card-sub" id="cvPreSub">—</div>
+    <div class="card" id="cardAbcp">
+      <div class="card-instrument">ABCP</div>
+      <div class="card-level" id="lvAbcp">—</div>
+      <div class="card-score">스트레스 <span id="scAbcp" style="font-weight:700">—</span></div>
+      <div class="card-signal" id="sigAbcp">—</div>
+      <div class="card-ym" id="ymAbcp">—</div>
     </div>
-    <div class="card" id="cardTr">
-      <div class="card-label">추세신호 (Trend)</div>
-      <div class="card-val" id="cvTr">—</div>
-      <div class="card-status"><span class="status-dot" id="cdTrDot"></span><span id="cdTrSt">—</span></div>
+    <div class="card" id="cardAbstb">
+      <div class="card-instrument">AB단기사채</div>
+      <div class="card-level" id="lvAbstb">—</div>
+      <div class="card-score">스트레스 <span id="scAbstb" style="font-weight:700">—</span></div>
+      <div class="card-signal" id="sigAbstb">—</div>
+      <div class="card-ym" id="ymAbstb">—</div>
     </div>
-    <div class="card c-comment">
-      <div class="card-label">현황 코멘트</div>
-      <div class="card-comment" id="cvComment">—</div>
+    <div class="card card-ai">
+      <div class="ai-label">
+        <span class="ai-dot"></span>
+        AI 시장 해석
+      </div>
+      <div class="ai-body" id="aiSummary">
+        <span class="ai-loading">분석 중...</span>
+      </div>
     </div>
   </div>
 
-  <!-- 게이지 + 차트 -->
-  <div class="main-grid">
-    <div class="panel">
-      <div class="panel-title">현재 상태</div>
-      <div class="gauge-wrap">
-        <canvas id="gaugeCanvas"></canvas>
-        <div class="gauge-val">
-          <div class="gauge-num" id="gNum">—</div>
-          <div class="gauge-lbl"><span class="status-dot" id="gDot"></span><span id="gLbl">—</span></div>
-        </div>
-      </div>
-      <div class="gauge-ticks">
-        <span class="gtick"><span class="gdot" style="background:var(--green)"></span>정상 &lt;0.50</span>
-        <span class="gtick"><span class="gdot" style="background:var(--amber)"></span>주의 0.50</span>
-        <span class="gtick"><span class="gdot" style="background:var(--red)"></span>경고 0.75</span>
-        <span class="gtick"><span class="gdot" style="background:var(--darkred)"></span>위험 1.00</span>
-      </div>
-      <div class="sig-section">
-        <div class="sig-row">
-          <div class="sig-name">잔액 이탈</div>
-          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-balance"></div></div>
-          <div class="sig-val" id="sv-balance">—</div>
-        </div>
-        <div class="sig-row">
-          <div class="sig-name">신용도 이탈</div>
-          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-credit"></div></div>
-          <div class="sig-val" id="sv-credit">—</div>
-        </div>
-        <div class="sig-row">
-          <div class="sig-name">만기구조</div>
-          <div class="sig-bar-bg"><div class="sig-bar-fill" id="sb-tenor"></div></div>
-          <div class="sig-val" id="sv-tenor">—</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <span style="font-size:10px;color:var(--muted);">MSI 시계열 (최근 9개월)</span>
-          <div style="display:flex;gap:10px;font-size:10px;color:#3a5068;" id="mainLegend">
-            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#3b82f6;display:inline-block;"></span>MSI v56.2</span>
+  <!-- 차트 -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div>
+        <div style="display:flex;align-items:center;">
+          <div class="chart-title" id="chartTitle">시장 스트레스 시계열 (0 = 정상 / 1 = 최고 위험)</div>
+          <div class="help-icon">?
+            <div class="help-tooltip">
+              <div class="tt-title">시장 스트레스 (Market Stress)</div>
+              <div style="color:#9ca3af;font-size:10px;margin-bottom:6px;">
+                CP · ABCP · AB단기사채 각각의 이상 수준을 0~1로 표현합니다.<br>
+                롤오버 이탈도·가속도·신용등급 변화·만기구조 변화 4개 지표를 머신러닝(Isolation Forest)으로 종합합니다.
+              </div>
+              <div class="tt-row"><span class="tt-key" style="color:#10b981;">0.0</span><span class="tt-val">정상 범위 — 특이 사항 없음</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">0.4+</span><span class="tt-val">주의 — 일부 지표 이상 조짐</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#ef4444;">0.6+</span><span class="tt-val">경보 — 복수 지표 동시 이상</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#991b1b;">1.0</span><span class="tt-val">최고 위험 — 과거 위기 수준</span></div>
+              <hr class="tt-sep">
+              <div class="tt-title">추세 이탈 (Trend Deviation)</div>
+              <div style="color:#9ca3af;font-size:10px;margin-bottom:6px;">
+                직전 12개월 평균 롤오버 비율 대비 현재 이탈 크기(Z-score)입니다.
+              </div>
+              <div class="tt-row"><span class="tt-key" style="color:#ef4444;">-2↓</span><span class="tt-val">급감 경고 — 롤오버 급격히 줄어듦</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">-1.5</span><span class="tt-val">감소 주의</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#9ca3af;">0</span><span class="tt-val">정상 — 평균 수준</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">+1.5</span><span class="tt-val">증가 주의 — 과열 조짐</span></div>
+              <div class="tt-row"><span class="tt-key" style="color:#ef4444;">+2↑</span><span class="tt-val">과열 경고</span></div>
+            </div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button onclick="toggleGroup('balance',this)" style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #10b981;background:transparent;color:#10b981;cursor:pointer;transition:all .15s;" id="btn-balance">잔액</button>
-          <button onclick="toggleGroup('credit',this)"  style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;cursor:pointer;transition:all .15s;" id="btn-credit">신용도</button>
-          <button onclick="toggleGroup('tenor',this)"   style="font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid #a78bfa;background:transparent;color:#a78bfa;cursor:pointer;transition:all .15s;" id="btn-tenor">만기</button>
+        <div class="legend" style="margin-top:8px;">
+          <div class="legend-item"><div class="legend-line" style="background:var(--blue)"></div>CP</div>
+          <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>ABCP</div>
+          <div class="legend-item"><div class="legend-line" style="background:var(--purple)"></div>AB단기사채</div>
+          <div class="legend-item"><div class="legend-dash" style="border-color:#dc2626;"></div><span id="legendRed">경보 0.6</span></div>
+          <div class="legend-item"><div class="legend-dash" style="border-color:#d97706;"></div><span id="legendYellow">주의 0.4</span></div>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:#3a5068;margin-bottom:4px;padding:0 2px;">
-        <span style="color:#3b82f6;">← MSI 점수</span>
-        <span>신호 강도 →</span>
+      <div class="chart-controls">
+        <div class="help-icon" style="margin-left:0;margin-right:2px;">?
+          <div class="help-tooltip" style="right:auto;left:0;top:22px;">
+            <div class="tt-title">시장 스트레스 (Market Stress)</div>
+            <div style="color:#9ca3af;font-size:10px;margin-bottom:6px;">
+              CP · ABCP · AB단기사채 각각의 이상 수준을 0~1로 표현합니다.<br>
+              롤오버 이탈도 · 가속도 · 신용등급 변화 · 만기구조 변화<br>
+              4개 지표를 머신러닝(Isolation Forest)으로 종합합니다.
+            </div>
+            <div class="tt-row"><span class="tt-key" style="color:#10b981;">0.0</span><span class="tt-val">정상 — 특이 사항 없음</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">0.4+</span><span class="tt-val">주의 — 일부 지표 이상 조짐</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#ef4444;">0.6+</span><span class="tt-val">경보 — 복수 지표 동시 이상</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#991b1b;">1.0</span><span class="tt-val">최고 위험 — 과거 위기 수준</span></div>
+            <hr class="tt-sep">
+            <div class="tt-title">추세 이탈 (Trend Deviation)</div>
+            <div style="color:#9ca3af;font-size:10px;margin-bottom:6px;">
+              직전 12개월 평균 롤오버 비율 대비 현재 이탈 크기입니다.<br>
+              음수 = 발행 급감(위기), 양수 = 발행 과열(전조)
+            </div>
+            <div class="tt-row"><span class="tt-key" style="color:#ef4444;">-2↓</span><span class="tt-val">급감 경고</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">-1.5</span><span class="tt-val">감소 주의</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#9ca3af;">  0</span><span class="tt-val">정상 — 평균 수준</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#f59e0b;">+1.5</span><span class="tt-val">증가 주의 — 과열 조짐</span></div>
+            <div class="tt-row"><span class="tt-key" style="color:#ef4444;">+2↑</span><span class="tt-val">과열 경고</span></div>
+          </div>
+        </div>
+        <button class="tab-btn active" id="tabScore" onclick="switchTab('score')">시장 스트레스</button>
+        <button class="tab-btn" id="tabZ" onclick="switchTab('z')">추세 이탈</button>
+        <div style="width:1px;height:16px;background:var(--border2);margin:0 4px;"></div>
+        <input type="month" id="rangeFrom" onchange="setDateRange()"
+          style="font-size:10px;padding:3px 6px;border:1px solid var(--border2);border-radius:3px;color:var(--text);background:var(--panel);cursor:pointer;">
+        <span style="font-size:10px;color:var(--muted);">~</span>
+        <input type="month" id="rangeTo" onchange="setDateRange()"
+          style="font-size:10px;padding:3px 6px;border:1px solid var(--border2);border-radius:3px;color:var(--text);background:var(--panel);cursor:pointer;">
+        <button class="tab-btn" id="btnReset" onclick="resetRange()">전체</button>
       </div>
-      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
     </div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
   </div>
 
-  <!-- 사건별 구간 차트 -->
-  <div class="event-section">
-    <div class="section-title">주요 사건 및 암수 사건 — MSI 구간 (T-8 ~ T+4)</div>
-    <div class="event-grid" id="eventGrid"></div>
-  </div>
-
-  <!-- 최근 24개월 테이블 -->
+  <!-- 테이블 -->
   <div class="tbl-section">
-    <div class="panel-title">최근 24개월 MSI 지표</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+      <div class="tbl-title" style="margin:0;padding:0;border:none;" id="tblTitle">최근 6개월 상세 지표</div>
+      <div style="display:flex;gap:6px;">
+        <button class="tab-btn active" id="tbl6"  onclick="setTblRange(6)">6개월</button>
+        <button class="tab-btn"        id="tbl12" onclick="setTblRange(12)">12개월</button>
+        <button class="tab-btn"        id="tbl24" onclick="setTblRange(24)">24개월</button>
+        <button class="tab-btn"        id="tblAll" onclick="setTblRange(0)">전체</button>
+      </div>
+    </div>
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
-            <th>연월</th>
-            <th>MSI 종합</th>
-            <th>상태</th>
-            <th>Precursor</th>
-            <th>Trend</th>
-            <th>잔액신호</th>
-            <th>신용신호</th>
-            <th>만기신호</th>
+            <th rowspan="2" style="vertical-align:bottom;">연월</th>
+            <th colspan="3" class="g-cp" style="border-bottom:1px solid var(--blue);text-align:center;">CP</th>
+            <th colspan="3" class="g-abcp" style="border-bottom:1px solid var(--green);text-align:center;">ABCP</th>
+            <th colspan="3" class="g-abstb" style="border-bottom:1px solid var(--purple);text-align:center;">AB단기사채</th>
+          </tr>
+          <tr>
+            <th class="g-cp">레벨</th><th class="g-cp">스트레스</th><th class="g-cp">추세이탈</th>
+            <th class="g-abcp">레벨</th><th class="g-abcp">스트레스</th><th class="g-abcp">추세이탈</th>
+            <th class="g-abstb">레벨</th><th class="g-abstb">스트레스</th><th class="g-abstb">추세이탈</th>
           </tr>
         </thead>
         <tbody id="tblBody"></tbody>
@@ -240,503 +336,386 @@ tr:hover td{background:rgba(59,130,246,0.04);}
 </div>
 
 <script>
-// ============================================================
-// 데이터 (Flask에서 주입 or API)
-// ============================================================
 const SC = {
-  '정상':  {color:'#10b981', bg:'rgba(16,185,129,0.12)'},
-  '주의':  {color:'#f59e0b', bg:'rgba(245,158,11,0.12)'},
-  '경고':  {color:'#ef4444', bg:'rgba(239,68,68,0.12)'},
-  '위험':  {color:'#991b1b', bg:'rgba(153,27,27,0.25)'},
-  '초위험':{color:'#7f1d1d', bg:'rgba(127,29,29,0.35)'},
-  '-':     {color:'#9ca3af', bg:'rgba(58,80,104,0.12)'},
+  '위험': {color:'#991b1b', bg:'rgba(153,27,27,0.15)', cls:'c-danger'},
+  '경고': {color:'#ef4444', bg:'rgba(239,68,68,0.12)',  cls:'c-warning'},
+  '주의': {color:'#f59e0b', bg:'rgba(245,158,11,0.12)', cls:'c-watch'},
+  '정상': {color:'#10b981', bg:'rgba(16,185,129,0.12)', cls:'c-normal'},
+  '-':    {color:'#9ca3af', bg:'rgba(156,163,175,0.1)', cls:''},
 };
 
-function statusColor(s){ return (SC[s]||SC['-']).color; }
-function statusBg(s)   { return (SC[s]||SC['-']).bg; }
+let allData = null;
+let currentTab = 'score';
+let chartFromYM = null;   // null = 전체
+let chartToYM   = null;
+let tblRange = 6;
+let chartInst = null;
 
-let mainChartData = [];
-const activeGroups = new Set();
-
-const GROUP_META = {
-  balance: {label:'잔액신호',   color:'#10b981'},
-  credit:  {label:'신용도신호', color:'#f59e0b'},
-  tenor:   {label:'만기신호',   color:'#a78bfa'},
-};
-
-function updateLegend() {
-  const leg = document.getElementById('mainLegend');
-  if (!leg) return;
-  let html = '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#3b82f6;display:inline-block;"></span>MSI v56.2</span>';
-  activeGroups.forEach(k => {
-    const m = GROUP_META[k];
-    html += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:${m.color};display:inline-block;"></span>${m.label}</span>`;
-  });
-  leg.innerHTML = html;
+function fmtYM(yyyymm) {
+  const s = String(yyyymm);
+  return s.slice(0,4) + '.' + s.slice(4);
 }
 
-function toggleGroup(key, btn) {
-  if (activeGroups.has(key)) {
-    activeGroups.delete(key);
-    btn.classList.remove('active');
-  } else {
-    activeGroups.add(key);
-    btn.classList.add('active');
-  }
-  updateLegend();
-  drawMainChart(mainChartData);
+function statusOf(level) { return SC[level] || SC['-']; }
+
+// ── 상단 카드 ──
+function renderCard(idSuffix, rec) {
+  if (!rec) return;
+  const st = statusOf(rec.final_level);
+  const cardEl = document.getElementById('card' + idSuffix);
+  cardEl.className = 'card ' + st.cls;
+  const lvEl = document.getElementById('lv' + idSuffix);
+  lvEl.textContent = rec.final_level;
+  lvEl.style.color = st.color;
+  document.getElementById('sc' + idSuffix).textContent = rec.anomaly_score.toFixed(4);
+  document.getElementById('sig' + idSuffix).textContent = 'M1: ' + rec.sw_signal + '  (z=' + rec.sw_z.toFixed(3) + ')';
+  document.getElementById('ym' + idSuffix).textContent = fmtYM(rec.YYYYMM);
 }
 
-const EVENTS_META = {
-  '코로나':     {yyyymm:202003, type:'발행자 과잉공급', color:'#94a3b8'},
-  '레고랜드':   {yyyymm:202210, type:'매수자 이탈',    color:'#ef4444'},
-  '새마을금고': {yyyymm:202307, type:'매수자 이탈',    color:'#f97316'},
-  '태영건설':   {yyyymm:202312, type:'매수자 이탈',    color:'#f59e0b'},
-};
-
-// ============================================================
-// 초기화 - API에서 데이터 로드
-// ============================================================
-async function init() {
-  const res  = await fetch('/api/msi/latest');
-  const data = await res.json();
-  renderCards(data.latest);
-  drawGauge(data.latest.msi, data.latest.status);
-  drawMainChart(data.chart_all);
-  renderEventCharts(data.events);
-  renderTable(data.recent24);
+// ── 차트 ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabScore').classList.toggle('active', tab === 'score');
+  document.getElementById('tabZ').classList.toggle('active', tab === 'z');
+  document.getElementById('chartTitle').textContent =
+    tab === 'score' ? '시장 스트레스 시계열 (0 = 정상 / 1 = 최고 위험)' : '추세 이탈 시계열 (음수 = 급감 / 양수 = 과열)';
+  document.getElementById('legendRed').textContent    = tab === 'score' ? '경보 0.6'  : '경보 ±2.0';
+  document.getElementById('legendYellow').textContent = tab === 'score' ? '주의 0.4'  : '주의 ±1.5';
+  drawChart();
 }
 
-// ============================================================
-// 카드
-// ============================================================
-function renderCards(d) {
-  document.getElementById('dataBadge').textContent = 'DATA: ' + String(d.yyyymm).replace(/(\d{4})(\d{2})/, '$1.$2');
-
-  // MSI 카드
-  const msiEl = document.getElementById('cardMsi');
-  msiEl.className = 'card ' + cardCls(d.status);
-  document.getElementById('cvMsi').textContent = d.msi.toFixed(3);
-  document.getElementById('cvMsi').style.color = statusColor(d.status);
-  document.getElementById('cdMsiDot').style.background = statusColor(d.status);
-  document.getElementById('cdMsiSt').textContent = d.status;
-
-  // Precursor 카드
-  const preEl = document.getElementById('cardPre');
-  preEl.className = 'card ' + cardCls(d.pre_status);
-  document.getElementById('cvPre').textContent = d.precursor.toFixed(3);
-  document.getElementById('cvPre').style.color = statusColor(d.pre_status);
-  document.getElementById('cdPreDot').style.background = statusColor(d.pre_status);
-  document.getElementById('cdPreSt').textContent = d.pre_status;
-  document.getElementById('cvPreSub').textContent =
-    `잔액 ${d.balance.toFixed(3)} | 신용 ${d.credit.toFixed(3)}`;
-
-  // Trend 카드
-  const trEl = document.getElementById('cardTr');
-  trEl.className = 'card ' + cardCls(d.tr_status);
-  document.getElementById('cvTr').textContent = d.trend.toFixed(3);
-  document.getElementById('cvTr').style.color = statusColor(d.tr_status);
-  document.getElementById('cdTrDot').style.background = statusColor(d.tr_status);
-  document.getElementById('cdTrSt').textContent = d.tr_status;
-
-  // 코멘트 카드
-  document.getElementById('cvComment').innerHTML = buildComment(d);
-
-  // 신호 분해 바
-  renderSigBar('balance', d.balance);
-  renderSigBar('credit',  d.credit);
-  renderSigBar('tenor',   d.tenor);
+function ymToInput(yyyymm) {
+  const s = String(yyyymm);
+  return s.slice(0,4) + '-' + s.slice(4);
 }
 
-function cardCls(s) {
-  return {'정상':'c-normal','주의':'c-watch','경고':'c-warning','위험':'c-danger','초위험':'c-danger'}[s] || '';
+function inputToYM(val) {
+  return val ? parseInt(val.replace('-', '')) : null;
 }
 
-function renderSigBar(key, val) {
-  const pct = Math.min(val * 100, 100).toFixed(1);
-  const col = val > 0.75 ? '#ef4444' : val > 0.5 ? '#f59e0b' : '#3b82f6';
-  document.getElementById(`sb-${key}`).style.cssText = `width:${pct}%;background:${col}`;
-  document.getElementById(`sv-${key}`).textContent   = val.toFixed(3);
-  document.getElementById(`sv-${key}`).style.color   = col;
+function setDateRange() {
+  chartFromYM = inputToYM(document.getElementById('rangeFrom').value);
+  chartToYM   = inputToYM(document.getElementById('rangeTo').value);
+  document.getElementById('btnReset').classList.remove('active');
+  drawChart();
 }
 
-function buildComment(d) {
-  const strongest = ['잔액 이탈', '신용도 이탈', '만기구조']
-    .map((l,i) => ({l, v:[d.balance,d.credit,d.tenor][i]}))
-    .sort((a,b)=>b.v-a.v)[0];
-  return `현재 MSI <strong>${d.msi.toFixed(3)}</strong> — <strong>${d.status}</strong> 구간.
-    가장 강한 신호는 <strong>${strongest.l}</strong>(${strongest.v.toFixed(3)}).
-    선행신호 ${d.pre_status}, 추세신호 ${d.tr_status} 상태.`;
+function resetRange() {
+  chartFromYM = null;
+  chartToYM   = null;
+  document.getElementById('rangeFrom').value = '';
+  document.getElementById('rangeTo').value   = '';
+  document.getElementById('btnReset').classList.add('active');
+  drawChart();
 }
 
-// ============================================================
-// 게이지
-// ============================================================
-function drawGauge(msi, status) {
-  const canvas = document.getElementById('gaugeCanvas');
-  const ctx    = canvas.getContext('2d');
-  canvas.width = 200; canvas.height = 105;
-  const cx = 100, cy = 100, r = 80, lw = 14;
+function initDateInputs() {
+  if (!allData || !allData.cp.length) return;
+  const all = allData.cp.map(r => r.YYYYMM);
+  const minYM = all[0];
+  const maxYM = all[all.length - 1];
 
-  const thresholds = [
-    {from:0,   to:0.50, color:'#10b981'},
-    {from:0.50,to:0.75, color:'#f59e0b'},
-    {from:0.75,to:1.00, color:'#ef4444'},
-    {from:1.00,to:2.50, color:'#7f1d1d'},
-  ];
-  const maxV = 2.5;
-  const toAngle = v => Math.PI + (Math.PI * Math.min(v, maxV) / maxV);
+  // 기본 6개월: (최신월 - 5개월) ~ 최신월
+  const from6 = subtractMonths(maxYM, 5);
 
-  ctx.clearRect(0,0,200,105);
-  ctx.lineCap = 'round';
+  document.getElementById('rangeFrom').min = ymToInput(minYM);
+  document.getElementById('rangeFrom').max = ymToInput(maxYM);
+  document.getElementById('rangeTo').min   = ymToInput(minYM);
+  document.getElementById('rangeTo').max   = ymToInput(maxYM);
 
-  // 배경 호
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, 2*Math.PI);
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = lw;
-  ctx.stroke();
+  document.getElementById('rangeFrom').value = ymToInput(from6);
+  document.getElementById('rangeTo').value   = ymToInput(maxYM);
 
-  // 색상 구간
-  thresholds.forEach(t => {
-    const sa = toAngle(t.from), ea = toAngle(t.to);
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, sa, ea);
-    ctx.strokeStyle = t.color;
-    ctx.lineWidth = lw;
-    ctx.stroke();
-  });
-
-  // 마스크 (값까지만 보이게)
-  const filled = toAngle(Math.min(msi, maxV));
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, filled, 2*Math.PI);
-  ctx.strokeStyle = 'rgba(7,9,14,0.92)';
-  ctx.lineWidth = lw + 2;
-  ctx.stroke();
-
-
-
-  const col = statusColor(status);
-  document.getElementById('gNum').textContent = msi.toFixed(3);
-  document.getElementById('gNum').style.color = col;
-  document.getElementById('gDot').style.background = col;
-  document.getElementById('gLbl').textContent = status;
-  document.getElementById('gLbl').style.color = col;
+  chartFromYM = from6;
+  chartToYM   = maxYM;
 }
 
-// ============================================================
-// 메인 차트
-// ============================================================
-let mainChartInst = null;
-function drawMainChart(data) {
-  if (data && data.length) mainChartData = data;
-  const d = mainChartData;
-  if (!d || !d.length) return;
+function subtractMonths(yyyymm, n) {
+  let y = Math.floor(yyyymm / 100);
+  let m = yyyymm % 100;
+  m -= n;
+  while (m <= 0) { m += 12; y--; }
+  return y * 100 + m;
+}
+
+function getVisible(arr) {
+  if (!chartFromYM && !chartToYM) return arr;
+  return arr.filter(r =>
+    (!chartFromYM || r.YYYYMM >= chartFromYM) &&
+    (!chartToYM   || r.YYYYMM <= chartToYM)
+  );
+}
+
+function drawChart() {
+  if (!allData) return;
+
+  const cpV    = getVisible(allData.cp);
+  const abcpV  = getVisible(allData.abcp);
+  const abstbV = getVisible(allData.abstb);
+
+  // YYYYMM 기준으로 공통 라벨 (cp 기준)
+  const labels = cpV.map(r => fmtYM(r.YYYYMM));
+
+  const yKey = currentTab === 'score' ? 'anomaly_score' : 'sw_z';
+  const cpData    = cpV.map(r => r[yKey]);
+  const abcpData  = abcpV.map(r => r[yKey]);
+  const abstbData = abstbV.map(r => r[yKey]);
+
   const ctx = document.getElementById('mainChart').getContext('2d');
-  if (mainChartInst) mainChartInst.destroy();
+  if (chartInst) chartInst.destroy();
 
-  const eventYYYYMM  = [202003, 202210, 202307, 202312];
-  const hiddenYYYYMM = [201805, 201810, 202010];
+  const datasets = [
+    {label:'CP',        data:cpData,    borderColor:'#3b82f6', borderWidth:1.8, pointRadius:0, fill:false, tension:0.3},
+    {label:'ABCP',      data:abcpData,  borderColor:'#10b981', borderWidth:1.8, pointRadius:0, fill:false, tension:0.3},
+    {label:'AB단기사채', data:abstbData, borderColor:'#a78bfa', borderWidth:1.8, pointRadius:0, fill:false, tension:0.3},
+  ];
 
-  // 기본 9개월로 필터
-  const latest = d[d.length - 1].YYYYMM;
-  const ly = Math.floor(latest / 100), lm = latest % 100;
-  let fy = ly, fm = lm - 8; if(fm <= 0){fm+=12; fy--;}
-  const fromYM = fy * 100 + fm;
-  const visData = d.filter(r => r.YYYYMM >= fromYM);
-
-  const labels = visData.map(d => {
-    const ym = String(d.YYYYMM);
-    return ym.slice(0,4) + '.' + ym.slice(4);
-  });
-
-  const evPlugin = {
-    id: 'evLines',
-    afterDraw(chart) {
-      const {ctx:c, chartArea:{top,bottom}, scales:{x}} = chart;
-      eventYYYYMM.forEach(eym => {
-        const idx = visData.findIndex(d => d.YYYYMM === eym);
-        if (idx < 0) return;
-        const px = x.getPixelForValue(idx);
-        c.save();
-        c.strokeStyle = 'rgba(239,68,68,0.45)';
-        c.lineWidth = 1.2;
-        c.setLineDash([3,3]);
-        c.beginPath(); c.moveTo(px,top); c.lineTo(px,bottom); c.stroke();
-        c.setLineDash([]);
-        c.restore();
-      });
-      hiddenYYYYMM.forEach(eym => {
-        const idx = visData.findIndex(d => d.YYYYMM === eym);
-        if (idx < 0) return;
-        const px = x.getPixelForValue(idx);
-        c.save();
-        c.strokeStyle = 'rgba(148,163,184,0.35)';
-        c.lineWidth = 1;
-        c.setLineDash([2,4]);
-        c.beginPath(); c.moveTo(px,top); c.lineTo(px,bottom); c.stroke();
-        c.setLineDash([]);
-        c.restore();
-      });
-    }
-  };
-
+  // 임계값 플러그인
   const threshPlugin = {
     id: 'thresh',
     beforeDraw(chart) {
       const {ctx:c, chartArea:{left,right}, scales:{y}} = chart;
-      [{v:0.50,col:'rgba(245,158,11,0.25)'},{v:0.75,col:'rgba(239,68,68,0.25)'},{v:1.00,col:'rgba(153,27,27,0.3)'}]
-      .forEach(({v,col}) => {
+      const lines = currentTab === 'score'
+        ? [{v:0.6, col:'rgba(220,38,38,0.85)',  dash:[5,3]}, {v:0.4, col:'rgba(217,119,6,0.8)', dash:[5,3]}]
+        : [{v:2.0, col:'rgba(220,38,38,0.85)',  dash:[5,3]}, {v:1.5, col:'rgba(217,119,6,0.8)', dash:[5,3]},
+           {v:-1.5,col:'rgba(217,119,6,0.8)',   dash:[5,3]}, {v:-2.0,col:'rgba(220,38,38,0.85)',dash:[5,3]}];
+      lines.forEach(({v,col,dash}) => {
+        if (v > chart.scales.y.max || v < chart.scales.y.min) return;
         const py = y.getPixelForValue(v);
-        c.save(); c.strokeStyle=col; c.lineWidth=1; c.setLineDash([4,4]);
+        c.save(); c.strokeStyle=col; c.lineWidth=1.5; c.setLineDash(dash);
         c.beginPath(); c.moveTo(left,py); c.lineTo(right,py); c.stroke();
         c.setLineDash([]); c.restore();
       });
     }
   };
 
-  mainChartInst = new Chart(ctx, {
+  const isScore = currentTab === 'score';
+  chartInst = new Chart(ctx, {
     type: 'line',
-    plugins: [threshPlugin, evPlugin],
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'MSI v56.2',
-          data: visData.map(r => r.MSI_total_v562),
-          borderColor: '#3b82f6', borderWidth: 2,
-          pointRadius: 0, fill: true,
-          backgroundColor: 'rgba(59,130,246,0.06)',
-          tension: 0.3,
-          yAxisID: 'y',
-        },
-        ...(activeGroups.has('balance') ? [{
-          label: '잔액신호',
-          data: visData.map(r => r.balance_core || 0),
-          borderColor: '#10b981', borderWidth: 1.5,
-          pointRadius: 0, fill: false, tension: 0.3,
-          borderDash: [4,2], yAxisID: 'y2',
-        }] : []),
-        ...(activeGroups.has('credit') ? [{
-          label: '신용도신호',
-          data: visData.map(r => r.credit_core || 0),
-          borderColor: '#f59e0b', borderWidth: 1.5,
-          pointRadius: 0, fill: false, tension: 0.3,
-          borderDash: [4,2], yAxisID: 'y2',
-        }] : []),
-        ...(activeGroups.has('tenor') ? [{
-          label: '만기신호',
-          data: visData.map(r => r.tenor_core || 0),
-          borderColor: '#a78bfa', borderWidth: 1.5,
-          pointRadius: 0, fill: false, tension: 0.3,
-          borderDash: [4,2], yAxisID: 'y2',
-        }] : []),
-      ]
-    },
+    plugins: [threshPlugin],
+    data: {labels, datasets},
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: {mode:'index', intersect:false},
       plugins: {
         legend: {display:false},
         tooltip: {
-          backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: 1,
-          titleColor: '#111827', bodyColor: '#9ca3af',
+          backgroundColor:'#fff', borderColor:'#e5e7eb', borderWidth:1,
+          titleColor:'#111827', bodyColor:'#6b7280',
           callbacks: {
             title: items => labels[items[0].dataIndex],
-            label: item => ` ${item.dataset.label}: ${item.parsed.y.toFixed(3)}`
+            label: item => ` ${item.dataset.label}: ${item.parsed.y.toFixed(4)}`
           }
         }
       },
       scales: {
         x: {
-          grid: {color:'rgba(0,0,0,0.04)'},
-          ticks: {
-            color:'#9ca3af', font:{size:9},
-            maxTicksLimit: 16,
-            callback(v,i) {
-              const l = labels[i]||'';
-              return l.endsWith('.01') ? l.slice(0,4) : '';
+          grid:{color:'rgba(0,0,0,0.04)'},
+          ticks:{color:'#9ca3af', font:{size:9}, maxRotation:0, autoSkip:true, maxTicksLimit:24,
+            callback(v,i){
+              const l = labels[i] || '';
+              if (!l) return '';
+              const [y, m] = l.split('.');
+              if (m === '01') return y + '\n01월';
+              return m + '월';
             }
           }
         },
         y: {
-          min: 0, max: 2.2,
-          grid: {color:'rgba(0,0,0,0.06)'},
-          ticks: {color:'#3b82f6', font:{size:9}, callback:v=>v.toFixed(1)},
-          position: 'left',
-        },
-        y2: {
-          min: 0, max: 1.2,
-          grid: {display:false},
-          ticks: {color:'#9ca3af', font:{size:9}, callback:v=>v.toFixed(1)},
-          position: 'right',
-          display: activeGroups.size > 0,
+          min: isScore ? 0   : undefined,
+          max: isScore ? 1.0 : undefined,
+          grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{color:'#9ca3af', font:{size:9}, callback:v=>v.toFixed(isScore?1:2)}
         }
       }
     }
   });
 }
 
-// ============================================================
-// 사건별 구간 차트
-// ============================================================
-const evCharts = {};
-function renderEventCharts(events) {
-  const grid = document.getElementById('eventGrid');
-  grid.innerHTML = '';
-
-  // 연월 순 정렬
-  const sorted = Object.entries(events).sort((a,b) => a[1].yyyymm - b[1].yyyymm);
-  sorted.forEach(([name, ev]) => {
-    const ym = String(ev.yyyymm);
-    const dateStr = ym.slice(0,4) + '.' + ym.slice(4);
-    const sc = SC[ev.status] || SC['-'];
-
-    const div = document.createElement('div');
-    div.className = 'ev-panel';
-    div.innerHTML = `
-      <div class="ev-header">
-        <div class="ev-dot" style="background:${ev.color}"></div>
-        <div>
-          <div class="ev-name">${name}</div>
-          <div class="ev-meta">${dateStr} | ${ev.type}</div>
-        </div>
-      </div>
-      <div class="ev-score" style="color:${sc.color}">${ev.peak.toFixed(3)}</div>
-      <div class="ev-type">
-        <span class="badge" style="background:${sc.bg};color:${sc.color}">${ev.status}</span>
-      </div>
-      <div class="ev-chart-wrap"><canvas id="evc-${name}"></canvas></div>
-    `;
-    grid.appendChild(div);
-
-    requestAnimationFrame(() => {
-      const canvas = document.getElementById(`evc-${name}`);
-      if (!canvas || !ev.window || !ev.window.length) return;
-      if (evCharts[name]) evCharts[name].destroy();
-
-      const wLabels   = ev.window.map(w => `T${w.T >= 0 ? '+' : ''}${w.T}`);
-      const eventIdx  = ev.window.findIndex(w => w.T === 0);
-
-      const threshEv = {
-        id: `thresh-${name}`,
-        beforeDraw(chart) {
-          const {ctx:c, chartArea:{left,right}, scales:{y}} = chart;
-          [{v:0.50,col:'rgba(245,158,11,0.3)'},{v:0.75,col:'rgba(239,68,68,0.3)'},{v:1.00,col:'rgba(153,27,27,0.4)'}]
-          .forEach(({v,col}) => {
-            if (v > chart.scales.y.max) return;
-            const py = y.getPixelForValue(v);
-            c.save(); c.strokeStyle=col; c.lineWidth=0.8; c.setLineDash([3,3]);
-            c.beginPath(); c.moveTo(left,py); c.lineTo(right,py); c.stroke();
-            c.setLineDash([]); c.restore();
-          });
-        }
-      };
-
-      const maxMSI = Math.max(...ev.window.map(w => w.MSI_total_v562), 1.1);
-
-      evCharts[name] = new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        plugins: [threshEv],
-        data: {
-          labels: wLabels,
-          datasets: [
-            {
-              label: 'MSI',
-              data: ev.window.map(w => w.MSI_total_v562),
-              borderColor: '#3b82f6', borderWidth: 1.8,
-              pointRadius: wLabels.map((_,i) => i === eventIdx ? 4 : 0),
-              pointBackgroundColor: ev.color,
-              fill: true, backgroundColor: 'rgba(59,130,246,0.07)',
-              tension: 0.3, yAxisID: 'y',
-            },
-            {
-              label: '잔액',
-              data: ev.window.map(w => w.balance_core || 0),
-              borderColor: '#10b981', borderWidth: 1.2,
-              pointRadius: 0, fill: false, tension: 0.3,
-              borderDash: [3,2], yAxisID: 'y2',
-            },
-            {
-              label: '신용도',
-              data: ev.window.map(w => w.credit_core || 0),
-              borderColor: '#f59e0b', borderWidth: 1.2,
-              pointRadius: 0, fill: false, tension: 0.3,
-              borderDash: [3,2], yAxisID: 'y2',
-            },
-            {
-              label: '만기',
-              data: ev.window.map(w => w.tenor_core || 0),
-              borderColor: '#a78bfa', borderWidth: 1.2,
-              pointRadius: 0, fill: false, tension: 0.3,
-              borderDash: [3,2], yAxisID: 'y2',
-            },
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          interaction: {mode:'index', intersect:false},
-          plugins: {
-            legend: {display:false},
-            tooltip: {
-              backgroundColor:'#ffffff', borderColor:'#e5e7eb', borderWidth:1,
-              titleColor:'#111827', bodyColor:'#9ca3af',
-              callbacks: {label: i => ` ${i.dataset.label}: ${i.parsed.y.toFixed(3)}`}
-            }
-          },
-          scales: {
-            x: {
-              grid:{display:false},
-              ticks:{color:'#9ca3af', font:{size:8}, maxTicksLimit:7}
-            },
-            y: {
-              min:0, max: Math.ceil(maxMSI * 10) / 10,
-              position:'left',
-              grid:{color:'rgba(0,0,0,0.06)'},
-              ticks:{color:'#3b82f6', font:{size:8}, callback:v=>v.toFixed(1)}
-            },
-            y2: {
-              min:0, max:1.2,
-              position:'right',
-              grid:{display:false},
-              ticks:{color:'#9ca3af', font:{size:8}, callback:v=>v.toFixed(1)}
-            }
-          }
-        }
-      });
-    });
+// ── 테이블 기간 선택 ──
+function setTblRange(n) {
+  tblRange = n;
+  [6,12,24,0].forEach(v => {
+    const id = v === 0 ? 'tblAll' : 'tbl' + v;
+    document.getElementById(id).classList.toggle('active', v === n);
   });
+  document.getElementById('tblTitle').textContent =
+    n === 0 ? '전체 기간 상세 지표' : `최근 ${n}개월 상세 지표`;
+  if (allData) renderTable(allData);
 }
 
-// ============================================================
-// 테이블
-// ============================================================
-function renderTable(rows) {
-  document.getElementById('tblBody').innerHTML = rows.map(d => {
-    const sc  = SC[d['MSI_v562_상태']] || SC['-'];
-    const ym  = String(d.YYYYMM);
-    const lbl = ym.slice(0,4) + '.' + ym.slice(4);
-    const msi = parseFloat(d.MSI_total_v562);
-    const pre = parseFloat(d.MSI_precursor_v562);
-    const tr  = parseFloat(d.MSI_trend_v562);
-    const bal = parseFloat(d.balance_core);
-    const cre = parseFloat(d.credit_core);
-    const ten = parseFloat(d.tenor_core);
-    return `<tr>
-      <td>${lbl}</td>
-      <td style="font-weight:700;color:${sc.color}">${msi.toFixed(3)}</td>
-      <td><span class="badge" style="background:${sc.bg};color:${sc.color}">${d['MSI_v562_상태']}</span></td>
-      <td style="color:#6b7280">${pre.toFixed(3)}</td>
-      <td style="color:#6b7280">${tr.toFixed(3)}</td>
-      <td style="color:${bal>0.5?'#ef4444':bal>0.3?'#f59e0b':'#9ca3af'}">${bal.toFixed(3)}</td>
-      <td style="color:${cre>0.5?'#ef4444':cre>0.3?'#f59e0b':'#9ca3af'}">${cre.toFixed(3)}</td>
-      <td style="color:${ten>0.5?'#ef4444':ten>0.3?'#f59e0b':'#9ca3af'}">${ten.toFixed(3)}</td>
-    </tr>`;
+// ── 테이블 ──
+function renderTable(data) {
+  const cpMap    = Object.fromEntries(data.cp.map(r    => [r.YYYYMM, r]));
+  const abcpMap  = Object.fromEntries(data.abcp.map(r  => [r.YYYYMM, r]));
+  const abstbMap = Object.fromEntries(data.abstb.map(r => [r.YYYYMM, r]));
+
+  const allYM = [...new Set([
+    ...data.cp.map(r => r.YYYYMM),
+    ...data.abcp.map(r => r.YYYYMM),
+    ...data.abstb.map(r => r.YYYYMM),
+  ])].sort((a,b)=>b-a);
+
+  const visYM = tblRange === 0 ? allYM : allYM.slice(0, tblRange);
+
+  document.getElementById('tblBody').innerHTML = visYM.map(ym => {
+    const cp    = cpMap[ym]    || {};
+    const abcp  = abcpMap[ym]  || {};
+    const abstb = abstbMap[ym] || {};
+
+    function cell(rec) {
+      if (!rec.final_level) return '<td>—</td><td>—</td><td>—</td>';
+      const st = statusOf(rec.final_level);
+      const zCol = rec.sw_z > 2 || rec.sw_z < -2 ? '#ef4444'
+                 : rec.sw_z > 1.5 || rec.sw_z < -1.5 ? '#f59e0b' : '#9ca3af';
+      return `
+        <td><span class="badge" style="background:${st.bg};color:${st.color}">${rec.final_level}</span></td>
+        <td style="color:${rec.anomaly_score>=0.6?'#ef4444':rec.anomaly_score>=0.4?'#f59e0b':'#9ca3af'}">${rec.anomaly_score.toFixed(4)}</td>
+        <td style="color:${zCol}">${rec.sw_z.toFixed(3)}</td>`;
+    }
+
+    return `<tr><td style="font-family:var(--mono);color:var(--muted)">${fmtYM(ym)}</td>${cell(cp)}${cell(abcp)}${cell(abstb)}</tr>`;
   }).join('');
 }
 
+// ── 초기화 ──
+async function init() {
+  try {
+    const res  = await fetch('/api/model/latest');
+    const data = await res.json();
+    if (data.error) { alert('model_output.json 없음 — 파이프라인을 먼저 실행하세요.'); return; }
+    allData = data;
+
+    document.getElementById('dataBadge').textContent = 'DATA: ' + fmtYM(data.last_updated);
+
+    const cpLast    = data.cp[data.cp.length - 1];
+    const abcpLast  = data.abcp[data.abcp.length - 1];
+    const abstbLast = data.abstb[data.abstb.length - 1];
+
+    renderCard('Cp',    cpLast);
+    renderCard('Abcp',  abcpLast);
+    renderCard('Abstb', abstbLast);
+
+    initDateInputs();
+    drawChart();
+    renderTable(data);
+  } catch(e) {
+    console.error(e);
+  }
+
+  // AI 요약은 별도로 비동기 호출 (시간이 걸리므로 분리)
+  fetchAiSummary();
+}
+
+async function fetchAiSummary() {
+  const el = document.getElementById('aiSummary');
+  try {
+    const res  = await fetch('/api/ai/interpret');
+    const data = await res.json();
+    if (data.error) {
+      el.innerHTML = `
+        <span style="color:var(--muted);font-size:11px;">아직 AI 요약이 없습니다.</span>
+        <br>
+        <button onclick="generateSummary()" style="margin-top:8px;padding:5px 12px;background:#10b981;
+          border:none;border-radius:4px;color:#fff;font-size:11px;cursor:pointer;">
+          AI 요약 생성
+        </button>`;
+    } else {
+      el.textContent = data.summary;
+    }
+  } catch(e) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:11px;">AI 해석을 불러올 수 없습니다.</span>';
+  }
+}
+
+async function generateSummary() {
+  const el = document.getElementById('aiSummary');
+  el.innerHTML = '<span style="color:var(--muted);font-size:11px;">생성 중...</span>';
+  try {
+    const res  = await fetch('/api/ai/summarize', {method: 'POST'});
+    const data = await res.json();
+    if (data.error) {
+      el.innerHTML = `<span style="color:#ef4444;font-size:11px;">${data.error}</span>`;
+    } else {
+      el.textContent = data.summary;
+    }
+  } catch(e) {
+    el.innerHTML = '<span style="color:#ef4444;font-size:11px;">생성 실패</span>';
+  }
+}
+
 init();
+
+// ── AI 채팅 ──
+const chatHistory = [];
+
+function toggleChat() {
+  const panel = document.getElementById('chatPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('chatInput').focus();
+    if (chatHistory.length === 0) addBubble('ai', '안녕하세요! 시장 데이터에 대해 궁금한 거 뭐든 물어보세요 😊');
+  }
+}
+
+function addBubble(role, text) {
+  const box = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-bubble ' + role;
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addBubble('user', msg);
+  chatHistory.push({role: 'user', content: msg});
+
+  const typing = addBubble('ai typing', '...');
+
+  try {
+    const res  = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg, history: chatHistory.slice(0, -1)}),
+    });
+    const data = await res.json();
+    const reply = data.reply || data.error || '오류가 발생했습니다.';
+    typing.className = 'chat-bubble ai';
+    typing.textContent = reply;
+    chatHistory.push({role: 'assistant', content: reply});
+  } catch(e) {
+    typing.className = 'chat-bubble ai';
+    typing.textContent = '연결에 실패했습니다.';
+  }
+
+  document.getElementById('chatMessages').scrollTop = 9999;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.id === 'chatInput') sendChat();
+});
 </script>
+
+<!-- AI 채팅 버튼 & 패널 -->
+<button id="chatBtn" onclick="toggleChat()" title="AI에게 물어보기">💬</button>
+<div id="chatPanel">
+  <div class="chat-header">
+    <span>AI 시장 도우미</span>
+    <span class="chat-close" onclick="toggleChat()">✕</span>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input-row">
+    <input id="chatInput" type="text" placeholder="궁금한 거 물어보세요...">
+    <button onclick="sendChat()">전송</button>
+  </div>
+</div>
+
 </body>
 </html>

@@ -1,59 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ project_name }} - {{ '로그인' if mode == 'login' else '회원가입' }}</title>
-    <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .auth-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; }
-        h2 { text-align: center; color: #1a1a1a; margin-bottom: 30px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #00ff41; color: #1a1a1a; }
-        .switch-link { text-align: center; margin-top: 20px; font-size: 0.9rem; }
-        .switch-link a { color: #007bff; text-decoration: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ project_name }} - 관리자 로그인</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0f1117;color:#e2e8f0;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+     min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.box{background:#1a1d27;border:1px solid #2d3148;border-radius:8px;padding:40px 36px;width:340px;}
+.logo{color:#22c55e;font-family:'Courier New',monospace;font-size:13px;font-weight:700;margin-bottom:28px;}
+h2{font-size:16px;color:#fff;margin-bottom:24px;}
+label{display:block;font-size:11px;color:#64748b;margin-bottom:5px;}
+input{width:100%;padding:9px 12px;background:#0f1117;border:1px solid #2d3148;border-radius:4px;
+      color:#e2e8f0;font-size:13px;margin-bottom:14px;outline:none;transition:border .15s;}
+input:focus{border-color:#22c55e;}
+.btn{width:100%;padding:10px;background:#22c55e;border:none;border-radius:4px;
+     color:#000;font-weight:700;font-size:13px;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:4px;
+       padding:9px 12px;font-size:12px;color:#ef4444;margin-bottom:16px;}
+.back{display:block;text-align:center;margin-top:16px;font-size:11px;color:#64748b;text-decoration:none;}
+.back:hover{color:#e2e8f0;}
+</style>
 </head>
 <body>
-    <div class="auth-box">
-        <h2>{{ project_name }}</h2>
-
-        {% if mode == 'login' %}
-        <form action="/login" method="POST">
-            <input type="text" name="username" placeholder="아이디" required>
-            <input type="password" name="password" placeholder="비밀번호" required>
-            <button type="submit">로그인</button>
-        </form>
-        <div class="switch-link">
-            계정이 없으신가요? <a href="/signup">회원가입</a>
-        </div>
-
-        {% else %}
-        <form action="/signup" method="POST">
-            <div style="margin-bottom: 15px;">
-                <label><input type="radio" name="user_type" value="personal" checked onclick="toggleCorp(false)"> 개인</label>
-                <label style="margin-left: 20px;"><input type="radio" name="user_type" value="corporate" onclick="toggleCorp(true)"> 기업</label>
-            </div>
-            <input type="text" name="username" placeholder="아이디" required>
-            <input type="password" name="password" placeholder="비밀번호" required>
-            <input type="email" name="email" placeholder="이메일" required>
-
-            <div id="corp_fields" style="display:none;">
-                <input type="text" name="company_name" placeholder="회사명">
-                <input type="text" name="biz_number" placeholder="사업자번호">
-            </div>
-            <button type="submit">가입하기</button>
-        </form>
-        <div class="switch-link">
-            이미 계정이 있으신가요? <a href="/login">로그인</a>
-        </div>
-        {% endif %}
-    </div>
-
-    <script>
-        function toggleCorp(isCorp) {
-            document.getElementById('corp_fields').style.display = isCorp ? 'block' : 'none';
-        }
-    </script>
+<div class="box">
+  <div class="logo">&gt; MARKET_WATCHDOG</div>
+  <h2>관리자 로그인</h2>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  <form method="POST" action="/login">
+    <label>아이디</label>
+    <input type="text" name="user_id" placeholder="admin" autocomplete="username" required>
+    <label>비밀번호</label>
+    <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+    <button class="btn" type="submit">로그인</button>
+  </form>
+  <a class="back" href="/">← 메인으로</a>
+</div>
 </body>
 </html>

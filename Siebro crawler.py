@@ -217,7 +217,7 @@ def xls_to_csv(xls_path, csv_path):
         return False
 
     except Exception as e:
-        print(f"      ⚠️ CSV 변환 실패: {e}")
+        print(f"      [오류] CSV 변환 실패: {e}")
         return False
 
 
@@ -225,7 +225,7 @@ def xls_to_csv(xls_path, csv_path):
 # 다운로드 대기 + 이름 변경 + csv 변환
 # ============================================================
 def wait_rename_convert(download_dir, label, timeout=90):
-    print(f"      ⬇️  다운로드 대기 중...")
+    print(f"      다운로드 대기 중...")
     start = time.time()
     while time.time() - start < timeout:
         files = os.listdir(download_dir)
@@ -248,14 +248,14 @@ def wait_rename_convert(download_dir, label, timeout=90):
 
             # csv 변환
             if xls_to_csv(xls_dst, csv_dst):
-                print(f"      ✅ 저장: {csv_dst}")
+                print(f"      [저장] {csv_dst}")
                 return True
             else:
-                print(f"      ⚠️ xls는 저장됨 (csv 변환 실패): {xls_dst}")
+                print(f"      [경고] xls는 저장됨 (csv 변환 실패): {xls_dst}")
                 return True  # xls라도 있으면 성공 처리
         time.sleep(1)
 
-    print(f"      ❌ 다운로드 타임아웃: {label}")
+    print(f"      [실패] 다운로드 타임아웃: {label}")
     return False
 
 
@@ -304,12 +304,12 @@ def input_date(driver, wait, cal_num, target_date):
         # 5. 확인 (input 값 체크)
         input_el = driver.find_element(By.ID, f"{prefix}_input")
         actual = input_el.get_attribute('value')
-        print(f"      📅 {'시작일' if cal_num==1 else '종료일'} → "
+        print(f"      {'시작일' if cal_num==1 else '종료일'} -> "
               f"목표:{year}/{month:02d}/{day:02d} / 실제:{actual}")
         return True
 
     except Exception as e:
-        print(f"      ⚠️ 날짜 입력 실패 (cal{cal_num}): {e}")
+        print(f"      [경고] 날짜 입력 실패 (cal{cal_num}): {e}")
         return False
 
 
@@ -318,7 +318,7 @@ def input_date(driver, wait, cal_num, target_date):
 # ============================================================
 def crawl_week(driver, cfg, week_days, save_dir, label):
     if not is_alive(driver):
-        print(f"      ⚠️ 드라이버 세션 죽음")
+        print(f"      [경고] 드라이버 세션 죽음")
         return False
 
     wait    = WebDriverWait(driver, 25)
@@ -342,7 +342,7 @@ def crawl_week(driver, cfg, week_days, save_dir, label):
         # 4. 조회 버튼
         search_btn = wait.until(EC.element_to_be_clickable((By.ID, cfg["search_id"])))
         driver.execute_script("arguments[0].click();", search_btn)
-        print(f"      🔍 조회 중... ({WAIT_SEARCH}초 대기)")
+        print(f"      조회 중... ({WAIT_SEARCH}초 대기)")
         time.sleep(WAIT_SEARCH)
 
         # 5. 엑셀 다운로드
@@ -353,7 +353,7 @@ def crawl_week(driver, cfg, week_days, save_dir, label):
         return wait_rename_convert(save_dir, label)
 
     except Exception as e:
-        print(f"      ❌ 오류 ({label}): {e}")
+        print(f"      [오류] ({label}): {e}")
         return False
 
 
@@ -401,7 +401,7 @@ def crawl_market(mkt_key, cfg):
                     except: pass
                 os.makedirs(mpath, exist_ok=True)
                 cur_dl_dir = mpath
-                print(f"\n  🌐 브라우저 시작 → {mpath}")
+                print(f"\n  [브라우저] 시작 -> {mpath}")
                 driver = make_driver(mpath)
 
             result = crawl_week(driver, cfg, week_days, mpath, lbl)
@@ -411,7 +411,7 @@ def crawl_market(mkt_key, cfg):
                 ok += 1
             else:
                 fail += 1
-                print(f"      🔄 드라이버 재시작...")
+                print(f"      드라이버 재시작...")
                 try: driver.quit()
                 except: pass
                 driver     = None
@@ -424,7 +424,7 @@ def crawl_market(mkt_key, cfg):
         try: driver.quit()
         except: pass
 
-    print(f"\n  [{cfg['label']}] 완료 — 수집:{ok} / 스킵:{skip} / 실패:{fail}")
+    print(f"\n  [{cfg['label']}] 완료 - 수집:{ok} / 스킵:{skip} / 실패:{fail}")
 
 
 # ============================================================
@@ -445,7 +445,7 @@ def main():
     for mkt_key, cfg in MARKETS.items():
         crawl_market(mkt_key, cfg)
 
-    print("\n✅ 전체 수집 완료!")
+    print("\n전체 수집 완료!")
 
 
 if __name__ == "__main__":

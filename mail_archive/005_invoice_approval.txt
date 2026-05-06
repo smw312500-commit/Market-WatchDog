@@ -1,0 +1,28 @@
+From: finance@yourcompany.com
+To: department-heads@yourcompany.com
+Date: February 17, 2026
+Subject: Invoice Approval Reminder — February Cycle Closes Feb 20
+
+Dear Department Heads,
+
+This is a reminder that the February invoice approval cycle closes
+on Friday, February 20, 2026 at 5:00 PM KST.
+
+Any invoices not approved by this deadline will be rolled over to
+the March payment cycle, which may affect vendor relationships and
+incur late payment fees.
+
+As of today, the following invoices are pending your approval in
+the finance portal:
+
+  Operations Dept:     3 invoices  (Total: KRW 12,400,000)
+  Marketing Dept:      5 invoices  (Total: KRW 8,750,000)
+  R&D Dept:            2 invoices  (Total: KRW 31,200,000)
+  Logistics Dept:      7 invoices  (Total: KRW 5,980,000)
+
+To approve, log into the finance portal at finance.internal and
+navigate to Payables > Pending Approval.
+
+For questions about specific invoices, contact ap@yourcompany.com.
+
+Finance Operations Team

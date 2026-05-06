@@ -43,10 +43,10 @@ WAIT_PAGE     = 10
 URL = "https://seibro.or.kr/websquare/control.jsp?w2xPath=/IPORTAL/user/moneyMarke/BIP_CNTS04004V.xml&menuNo=126"
 
 CATEGORIES = [
-    {"name": "어음(일반)",   "radio_id": "SF_RADIO1_input_0", "folder": "cp"},
-    {"name": "어음AB",       "radio_id": "SF_RADIO1_input_1", "folder": "abcp"},
-    {"name": "일반단기사채", "radio_id": "SF_RADIO1_input_2", "folder": "일반단기사채"},
-    {"name": "AB단기사채",   "radio_id": "SF_RADIO1_input_3", "folder": "ab단기사채"},
+    {"name": "어음(일반)",   "radio_id": "SF_RADIO1_input_0", "folder": "cp",          "prefix": "CP"},
+    {"name": "어음AB",       "radio_id": "SF_RADIO1_input_1", "folder": "abcp",         "prefix": "ABCP"},
+    {"name": "일반단기사채", "radio_id": "SF_RADIO1_input_2", "folder": "일반단기사채", "prefix": "일반단기사채"},
+    {"name": "AB단기사채",   "radio_id": "SF_RADIO1_input_3", "folder": "ab단기사채",   "prefix": "ABSTB"},
 ]
 
 CAL_IMG_ID   = "inputCalendar1_img"
@@ -246,7 +246,7 @@ def crawl_category(cat):
         if date(year, month, 1) > CRAWL_END:
             break
 
-        lbl         = file_label(year, month)
+        lbl         = cat["prefix"] + " " + file_label(year, month)
         target_date = month_last_weekday(year, month)
 
         if target_date > CRAWL_END:

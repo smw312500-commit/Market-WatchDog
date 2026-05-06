@@ -28,16 +28,10 @@
     <div class="brand">{{ project_name }}</div>
     <div class="menu">
         <a href="/">메인(뉴스)</a>
-
-        {% if session.get('user_id') %}
-            <span style="color: #00ff41; margin-left: 20px;">{{ session['username'] }}님</span>
-            <a href="/logout">로그아웃</a>
-        {% else %}
-            <a href="/login">로그인 / 회원가입</a>
-        {% endif %}
-
         <a href="/indicators">지표</a>
         <a href="/analysis">AI분석</a>
+        <a href="/demo">Decoy 데모</a>
+        <a href="/admin">관리자</a>
     </div>
 </nav>
 

@@ -1,0 +1,31 @@
+From: helpdesk@yourcompany.com
+To: all-staff@yourcompany.com
+Date: January 19, 2026
+Subject: Scheduled System Maintenance — Saturday Jan 24, 11PM to 3AM
+
+Dear All,
+
+Please be advised that our IT infrastructure team will be conducting
+scheduled maintenance on the company ERP and internal file servers
+this coming Saturday evening.
+
+Maintenance window:
+  Start:  Saturday, January 24, 2026 at 11:00 PM (KST)
+  End:    Sunday, January 25, 2026 at 3:00 AM (KST)
+
+During this period, the following services will be unavailable:
+  - SAP ERP system
+  - Internal SharePoint and document management portal
+  - VPN remote access
+  - Company email (intermittent disruption possible)
+
+Please save all work and log out of all systems before 10:45 PM
+on Saturday. Any unsaved data may be lost during the maintenance
+window.
+
+For urgent matters during the downtime, contact the on-call IT
+support line at ext. 9911 or emergency@yourcompany.com.
+
+We apologize for any inconvenience.
+
+IT Helpdesk Team

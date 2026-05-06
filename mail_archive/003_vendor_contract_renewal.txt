@@ -1,0 +1,29 @@
+From: procurement@yourcompany.com
+To: s.park@yourcompany.com
+Date: February 3, 2026
+Subject: Vendor Contract Renewal — Daesung Packaging Co. (Expires Mar 31)
+
+Hi Soyeon,
+
+A reminder that our supply agreement with Daesung Packaging Co.
+is set to expire on March 31, 2026. Per our standard renewal
+policy, we need to initiate the review process at least 60 days
+prior to expiration.
+
+Key contract terms to review:
+  - Unit pricing for corrugated box grades A, B, and C
+  - Minimum monthly order volume (currently 40,000 units)
+  - Lead time commitments (currently 5 business days)
+  - Penalty clauses for late delivery
+
+Their account manager, Mr. Choi Byung-jun, has already reached
+out requesting a meeting. I have tentatively scheduled a call for
+February 18 at 2:00 PM. Please let me know if this conflicts with
+your schedule.
+
+Please prepare a comparison report against alternative vendors
+(Global Pack, Inno-Box) before the meeting so we have a solid
+negotiating position.
+
+Regards,
+Procurement Team
